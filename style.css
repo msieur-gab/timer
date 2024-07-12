@@ -1,28 +1,8 @@
- /*#canvas {
+ #canvas {
       display: block;
       margin: 20px auto;
       background-color: #f3f3f3;
       border-radius: 50%;
-    }*/
-
- #canvasContainer {
-      position: absolute;
-	 left:50%;
-      display: block;
-      margin: 20px auto;
-    }
-    #canvas {
-      display: block;
-      background-color: #f3f3f3;
-			border-radius: 50%;
-    }
-    #timerDisplay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1.2em;
-      color: #000;
     }
  .switch {
       position: relative;
@@ -62,82 +42,4 @@
     }
     input:checked + .slider:before {
       transform: translateX(26px);
-    }
-
-
- body {
-      font-family: Arial, sans-serif;
-	 margin:0  }
-
-
-   #offCanvasMenu {
-      height: 100%;
-      width: 250px;
-      position: fixed;
-      top: 0;
-      left: -250px;
-      background-color: #111;
-      overflow-x: hidden;
-      transition: 0.5s;
-      padding-top: 60px;
-    }
-    #offCanvasMenu a {
-      padding: 10px 15px;
-      text-decoration: none;
-      font-size: 18px;
-      color: #818181;
-      display: block;
-      transition: 0.3s;
-    }
-    #offCanvasMenu a:hover {
-      color: #f1f1f1;
-    }
-    #menuButton {
-      font-size: 20px;
-      cursor: pointer;
-      background-color: #111;
-      color: white;
-      padding: 10px 15px;
-      border: none;
-    }
-    .collapsible {
-      background-color: #111;
-      color: white;
-      cursor: pointer;
-      padding: 10px 15px;
-      width: 100%;
-      border: none;
-      text-align: left;
-      outline: none;
-      font-size: 18px;
-      transition: 0.3s;
-    }
-    .collapsible:hover {
-      background-color: #575757;
-    }
-    .content {
-      padding: 0 15px;
-      display: none;
-      overflow: hidden;
-      background-color: #262626;
-    }
-    .tea-item {
-      color: #818181;
-      padding: 10px;
-      cursor: pointer;
-    }
-    .tea-item:hover {
-      color: #f1f1f1;
-    }
-    .selected {
-      color: #f1f1f1;
-    }
-
- #searchInput {
-      width: 90%;
-      padding: 10px;
-      margin: 10px auto;
-      display: block;
-      border: none;
-      border-radius: 4px;
     }
