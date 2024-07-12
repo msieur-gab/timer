@@ -53,6 +53,7 @@ const searchInput = document.getElementById("searchInput");
 let remainingTime, initialDuration, timerRunning = false, timerEndTime;
 let steepingStyle = defaultSteepingStyle;
 let wakeLock = null;
+let notificationGranted = false;
 
 // Helper Functions
 function formatTime(seconds) {
@@ -143,14 +144,7 @@ function startTimer() {
     timerRunning = true;
     acquireWakeLock();
     updateTimer();
-  }
-}
-
-function addTime() {
-  if (timerRunning) {
-    timerEndTime += 10000;
-    remainingTime += 10;
-    initialDuration += 10;
+    requestNotificationPermission();
   }
 }
 
@@ -160,6 +154,60 @@ function stopTimer() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   releaseWakeLock();
+  closeNotification();
+}
+
+function updateTimer() {
+  if (!timerRunning) return;
+
+  const now = Date.now();
+  remainingTime = Math.max(0, (timerEndTime - now) / 1000);
+
+  if (remainingTime === 0) {
+    stopTimer(); // Call stopTimer directly to handle timer end logic
+    playSound('ring');
+    showNotification("Tea is ready!");
+  } else if (remainingTime <= 10 && remainingTime > 9.9) {
+    playSound('beep');
+  }
+
+  updateTimerDisplay();
+  drawCircle((initialDuration - remainingTime) / initialDuration);
+
+  requestAnimationFrame(updateTimer);
+}
+
+// Notification Functions
+function requestNotificationPermission() {
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission().then(permission => {
+      if (permission === 'granted') {
+        notificationGranted = true;
+      }
+    });
+  } else {
+    notificationGranted = true;
+  }
+}
+
+function showNotification(message) {
+  if (notificationGranted) {
+    new Notification(message, {
+      body: 'Your tea is ready!',
+      icon: 'tea-icon.png'
+    });
+  }
+}
+
+function closeNotification() {
+  // Close any existing notifications
+  if (window.Notification && Notification.close) {
+    Notification.close();
+  }
+}
+
+function playSound(soundName) {
+  sounds[soundName].play();
 }
 
 function updateTimerDisplay() {
@@ -172,24 +220,7 @@ function updateTimerDisplay() {
   timerDisplay.textContent = `${minutes}:${secs}`;
 }
 
-function updateTimer() {
-  if (!timerRunning) return;
 
-  const now = Date.now();
-  remainingTime = Math.max(0, (timerEndTime - now) / 1000);
-
-  if (remainingTime === 0) {
-    stopTimer(); // Call stopTimer directly to handle timer end logic
-    sounds.ring.play();
-  } else if (remainingTime <= 10 && remainingTime > 9.9) {
-    sounds.beep.play();
-  }
-
-  updateTimerDisplay();
-  drawCircle((initialDuration - remainingTime) / initialDuration);
-
-  requestAnimationFrame(updateTimer);
-}
 
 // Menu Functions
 function openMenu() {
@@ -317,9 +348,27 @@ function attachEventListeners() {
         : "Gong Fu";
     });
     searchInput.removeEventListener("input", filterTeaList);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    
   });
 }
 
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    // Resume the timer and sound
+    if (timerRunning) {
+      acquireWakeLock();
+      updateTimer();
+    }
+  } else {
+    // Pause the timer and sound
+    if (timerRunning) {
+      releaseWakeLock();
+      updateTimer();
+    }
+  }
+}
 // Initialization
 document.addEventListener("DOMContentLoaded", () => {
   createTeaList();
