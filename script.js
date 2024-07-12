@@ -39,9 +39,9 @@ const teaCategories = [
 
 // Sound data directly in JS
 const sounds = {
-  beep: new Audio('https://assets.codepen.io/1243614/bells-1-72261.mp3'),
-  ring: new Audio('https://assets.codepen.io/1243614/bell-meditation-75335.mp3'),
-  dummy: new Audio('https://assets.codepen.io/1243614/birds-chirping-75156.mp3') // Dummy audio for keeping the screen awake
+  beep: new Audio('sound/bells-1-72261.mp3'),
+  ring: new Audio('sound/bell-meditation-75335.mp3'),
+  dummy: new Audio('sound/birds-chirping-75156.mp3') // Dummy audio for keeping the screen awake
 };
 
 // Function to update the displayed timer value
