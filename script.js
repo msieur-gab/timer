@@ -270,6 +270,7 @@ function toggleCategory() {
 }
 
 // Function to select a tea from the list
+// Function to select a tea from the list
 function selectTea(categoryIndex, teaIndex) {
   const previouslySelected = teaList.querySelector('.selected');
   if (previouslySelected) {
@@ -281,6 +282,17 @@ function selectTea(categoryIndex, teaIndex) {
   stopTimer(); // Stop the timer when a new tea is selected
   updateDisplayedTime();
   selectedTeaCache = null; // Clear the memoized selectedTea
+
+  // Update the timer with the new tea's steeping duration
+  const selectedTeaObj = getSelectedTea();
+  if (selectedTeaObj) {
+    const selectedDuration = selectedTeaObj.durations[steepingStyle];
+    remainingTime = selectedDuration;
+    initialDuration = selectedDuration;
+    updateTimerDisplay();
+  } else {
+    timerDisplay.textContent = formatTime(0);
+  }
 }
 
 // Function to filter the tea list based on search input
