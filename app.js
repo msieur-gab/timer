@@ -3,11 +3,25 @@ const timer2 = document.getElementById('timer2');
 const timer3 = document.getElementById('timer3');
 const status = document.getElementById('status');
 
+// Request notification permission
+function requestNotificationPermission() {
+    if ('Notification' in window) {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === 'granted') {
+                console.log('Notification permission granted.');
+            } else {
+                console.log('Notification permission denied.');
+            }
+        });
+    }
+}
+
 // Register service worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js')
         .then(registration => {
             console.log('Service Worker registered with scope:', registration.scope);
+            requestNotificationPermission();
         })
         .catch(error => {
             console.log('Service Worker registration failed:', error);
