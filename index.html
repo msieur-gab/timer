@@ -3,27 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Mobile-Friendly Website</title>
-
-    <link rel="stylesheet" href="style.css">
-<!--     <link rel="stylesheet" href="mobile.css" media="screen and (max-width: 600px)">  -->
+    <title>Tea Timer</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; }
+    </style>
 </head>
 <body>
-
-     <h1>Tea Timer</h1>
-  <label for="teaSelect">Choose your tea:</label>
-  <select id="teaSelect"></select>
-  <label class="switch">
-    <input type="checkbox" id="steepingStyleToggle">
-    <span class="slider"></span>
-  </label>
-  <span id="steepingStyleLabel">Gong Fu</span>
-  <button id="startButton">Start Timer</button>
-  <button id="addTimeButton">Add 10 Seconds</button>
-  <button id="stopButton">Stop Timer</button>
-  <div id="timerDisplay">00:00</div>
-  <canvas id="canvas" width="200" height="200"></canvas>
-
-    <script src="script.js"></script> 
-    </body>
+    <h1>Tea Timer</h1>
+    <div>
+        <button id="timer1">1 Minute</button>
+        <button id="timer2">2 Minutes</button>
+        <button id="timer3">3 Minutes</button>
+    </div>
+    <div id="status"></div>
+    <script src="app.js"></script>
+</body>
 </html>
