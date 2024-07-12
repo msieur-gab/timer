@@ -1,42 +1,3 @@
-// Tea and Sound Data (Constants)
-const teaCategories = [
-  {
-    category: "Green Tea",
-    teas: [
-      { name: "Sencha", durations: { gongfu: 30, western: 180 } },
-      { name: "Matcha", durations: { gongfu: 20, western: 120 } },
-    ],
-  },
-  {
-    category: "Black Tea",
-    teas: [
-      { name: "Assam", durations: { gongfu: 40, western: 240 } },
-      { name: "Darjeeling", durations: { gongfu: 30, western: 180 } },
-    ],
-  },
-  {
-    category: "Oolong Tea",
-    teas: [
-      { name: "Da Hong Pao", durations: { gongfu: 60, western: 300 } },
-      { name: "Tie Guan Yin", durations: { gongfu: 50, western: 240 } },
-    ],
-  },
-  {
-    category: "Herbal Tea",
-    teas: [
-      { name: "Chamomile", durations: { gongfu: 360, western: 600 } },
-      { name: "Peppermint", durations: { gongfu: 240, western: 480 } },
-    ],
-  },
-];
-
-const sounds = {
-  beep: new Audio('bells-1-72261.mp3'),
-  ring: new Audio('bells-1-72261.mp3'),
-};
-
-const defaultSteepingStyle = "gongfu";
-
 // DOM Elements
 const startButton = document.getElementById("startButton");
 const addTimeButton = document.getElementById("addTimeButton");
@@ -51,7 +12,7 @@ const searchInput = document.getElementById("searchInput");
 
 // State Variables
 let remainingTime, initialDuration, timerRunning = false, timerEndTime;
-let steepingStyle = defaultSteepingStyle;
+let steepingStyle = "gongfu";
 let wakeLock = null;
 let notificationGranted = false;
 
@@ -148,6 +109,14 @@ function startTimer() {
   }
 }
 
+function addTime() {
+  if (timerRunning) {
+    timerEndTime += 10000;
+    remainingTime += 10;
+    initialDuration += 10;
+  }
+}
+
 function stopTimer() {
   timerRunning = false;
   timerDisplay.textContent = formatTime(0);
@@ -183,6 +152,8 @@ function requestNotificationPermission() {
     Notification.requestPermission().then(permission => {
       if (permission === 'granted') {
         notificationGranted = true;
+      } else {
+        notificationGranted = false;
       }
     });
   } else {
@@ -207,6 +178,10 @@ function closeNotification() {
 }
 
 function playSound(soundName) {
+  const sounds = {
+    beep: new Audio('bells-1-72261.mp3'),
+    ring: new Audio('bells-1-72261.mp3'),
+  };
   sounds[soundName].play();
 }
 
@@ -217,10 +192,8 @@ function updateTimerDisplay() {
   const seconds = Math.floor(remainingTime % 60)
     .toString()
     .padStart(2, "0");
-  timerDisplay.textContent = `${minutes}:${secs}`;
+  timerDisplay.textContent = `${minutes}:${seconds}`;
 }
-
-
 
 // Menu Functions
 function openMenu() {
@@ -233,6 +206,37 @@ function closeMenu() {
 
 // Function to create the tea list
 function createTeaList() {
+  const teaCategories = [
+    {
+      category: "Green Tea",
+      teas: [
+        { name: "Sencha", durations: { gongfu: 30, western: 180 } },
+        { name: "Matcha", durations: { gongfu: 20, western: 120 } },
+      ],
+    },
+    {
+      category: "Black Tea",
+      teas: [
+        { name: "Assam", durations: { gongfu: 40, western: 240 } },
+        { name: "Darjeeling", durations: { gongfu: 30, western: 180 } },
+      ],
+    },
+    {
+      category: "Oolong Tea",
+      teas: [
+        { name: "Da Hong Pao", durations: { gongfu: 60, western: 300 } },
+        { name: "Tie Guan Yin", durations: { gongfu: 50, western: 240 } },
+      ],
+    },
+    {
+      category: "Herbal Tea",
+      teas: [
+        { name: "Chamomile", durations: { gongfu: 360, western: 600 } },
+        { name: "Peppermint", durations: { gongfu: 240, western: 480 } },
+      ],
+    },
+  ];
+
   teaCategories.forEach((category, index) => {
     const categoryButton = document.createElement('button');
     categoryButton.classList.add('collapsible');
@@ -269,7 +273,6 @@ function toggleCategory() {
   }
 }
 
-// Function to select a tea from the list
 // Function to select a tea from the list
 function selectTea(categoryIndex, teaIndex) {
   const previouslySelected = teaList.querySelector('.selected');
@@ -360,9 +363,7 @@ function attachEventListeners() {
         : "Gong Fu";
     });
     searchInput.removeEventListener("input", filterTeaList);
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
   });
 }
 
@@ -381,6 +382,7 @@ function handleVisibilityChange() {
     }
   }
 }
+
 // Initialization
 document.addEventListener("DOMContentLoaded", () => {
   createTeaList();
