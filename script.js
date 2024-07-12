@@ -30,11 +30,9 @@ const teaCategories = [
   },
 ];
 
-// Sound data directly in JS
 const sounds = {
   beep: new Audio('bells-1-72261.mp3'),
   ring: new Audio('bells-1-72261.mp3'),
-
 };
 
 const defaultSteepingStyle = "gongfu";
@@ -63,12 +61,19 @@ function formatTime(seconds) {
   return `${mins}:${secs}`;
 }
 
+// Memoized getSelectedTea function
+let selectedTeaCache = null;
 function getSelectedTea() {
+  if (selectedTeaCache) {
+    return selectedTeaCache;
+  }
+
   const selectedTeaElement = teaList.querySelector(".selected");
   if (selectedTeaElement) {
     const categoryIndex = selectedTeaElement.dataset.categoryIndex;
     const teaIndex = selectedTeaElement.dataset.index;
-    return teaCategories[categoryIndex].teas[teaIndex];
+    selectedTeaCache = teaCategories[categoryIndex].teas[teaIndex];
+    return selectedTeaCache;
   }
   return null;
 }
@@ -82,6 +87,7 @@ function updateDisplayedTime() {
     updateTimerDisplay();
   }
 }
+
 function drawCircle(progress) {
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
@@ -156,8 +162,6 @@ function stopTimer() {
   releaseWakeLock();
 }
 
-
-
 function updateTimerDisplay() {
   const minutes = Math.floor(remainingTime / 60)
     .toString()
@@ -165,10 +169,8 @@ function updateTimerDisplay() {
   const seconds = Math.floor(remainingTime % 60)
     .toString()
     .padStart(2, "0");
-  timerDisplay.textContent = `${minutes}:${seconds}`;
+  timerDisplay.textContent = `${minutes}:${secs}`;
 }
-
-
 
 function updateTimer() {
   if (!timerRunning) return;
@@ -197,21 +199,14 @@ function openMenu() {
 function closeMenu() {
   document.getElementById("offCanvasMenu").style.left = "-250px";
 }
+
 // Function to create the tea list
 function createTeaList() {
   teaCategories.forEach((category, index) => {
     const categoryButton = document.createElement('button');
     categoryButton.classList.add('collapsible');
     categoryButton.textContent = category.category;
-    categoryButton.addEventListener('click', function() {
-      this.classList.toggle('active');
-      const content = this.nextElementSibling;
-      if (content.style.display === "block") {
-        content.style.display = "none";
-      } else {
-        content.style.display = "block";
-      }
-    });
+    categoryButton.addEventListener('click', toggleCategory);
 
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('content');
@@ -232,6 +227,17 @@ function createTeaList() {
   });
 }
 
+// Function to toggle category visibility
+function toggleCategory() {
+  this.classList.toggle('active');
+  const content = this.nextElementSibling;
+  if (content.style.display === "block") {
+    content.style.display = "none";
+  } else {
+    content.style.display = "block";
+  }
+}
+
 // Function to select a tea from the list
 function selectTea(categoryIndex, teaIndex) {
   const previouslySelected = teaList.querySelector('.selected');
@@ -243,38 +249,37 @@ function selectTea(categoryIndex, teaIndex) {
   closeMenu();
   stopTimer(); // Stop the timer when a new tea is selected
   updateDisplayedTime();
-}
-
-// Function to get the selected tea
-function getSelectedTea() {
-  const selectedTeaElement = teaList.querySelector('.selected');
-  if (selectedTeaElement) {
-    const categoryIndex = selectedTeaElement.dataset.categoryIndex;
-    const teaIndex = selectedTeaElement.dataset.index;
-    return teaCategories[categoryIndex].teas[teaIndex];
-  }
-  return null;
+  selectedTeaCache = null; // Clear the memoized selectedTea
 }
 
 // Function to filter the tea list based on search input
+let filterTimeoutId = null;
 function filterTeaList() {
-  const filter = searchInput.value.toLowerCase();
-  const categoryButtons = teaList.querySelectorAll('.collapsible');
-  const teaItems = teaList.querySelectorAll('.tea-item');
+  if (filterTimeoutId !== null) {
+    clearTimeout(filterTimeoutId);
+  }
 
-  categoryButtons.forEach(button => button.style.display = 'none');
-  teaItems.forEach(item => {
-    const text = item.textContent.toLowerCase();
-    if (text.includes(filter)) {
-      item.style.display = "";
-      const content = item.parentElement;
-      const categoryButton = content.previousElementSibling;
-      categoryButton.style.display = "";
-      content.style.display = "block";
-    } else {
-      item.style.display = "none";
-    }
-  });
+  filterTimeoutId = setTimeout(() => {
+    const filter = searchInput.value.toLowerCase();
+    const categoryButtons = teaList.querySelectorAll('.collapsible');
+    const teaItems = teaList.querySelectorAll('.tea-item');
+
+    categoryButtons.forEach(button => button.style.display = 'none');
+    teaItems.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      if (text.includes(filter)) {
+        item.style.display = "";
+        const content = item.parentElement;
+        const categoryButton = content.previousElementSibling;
+        categoryButton.style.display = "";
+        content.style.display = "block";
+      } else {
+        item.style.display = "none";
+      }
+    });
+
+    filterTimeoutId = null;
+  }, 300);
 }
 
 // Event Listeners
@@ -296,10 +301,35 @@ function attachEventListeners() {
     updateDisplayedTime();
   });
   searchInput.addEventListener("input", filterTeaList);
+
+  // Clean up event listeners on component unmount or page unload
+  window.addEventListener("beforeunload", () => {
+    document
+      .getElementById("menuButton")
+      .removeEventListener("click", openMenu);
+    startButton.removeEventListener("click", startTimer);
+    addTimeButton.removeEventListener("click", addTime);
+    stopButton.removeEventListener("click", stopTimer);
+    steepingStyleToggle.removeEventListener("change", () => {
+      steepingStyle = steepingStyleToggle.checked ? "western" : "gongfu";
+      steepingStyleLabel.textContent = steepingStyleToggle.checked
+        ? "Western"
+        : "Gong Fu";
+    });
+    searchInput.removeEventListener("input", filterTeaList);
+  });
 }
 
 // Initialization
 document.addEventListener("DOMContentLoaded", () => {
   createTeaList();
   attachEventListeners();
+
+  // Make the canvas responsive
+  function resizeCanvas() {
+    canvas.width = canvas.parentElement.offsetWidth;
+    canvas.height = canvas.parentElement.offsetHeight;
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
 });
