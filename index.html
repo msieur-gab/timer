@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Mobile-Friendly Website</title>
+
+    <link rel="stylesheet" href="style.css">
+<!--     <link rel="stylesheet" href="mobile.css" media="screen and (max-width: 600px)">  -->
+</head>
+<body>
+
+      <button id="menuButton">☰ Select Tea</button>
+  <div id="offCanvasMenu">
+    <a href="javascript:void(0)" onclick="closeMenu()">Close Menu &times;</a>
+		    <input type="text" id="searchInput" placeholder="Search for tea...">
+
+    <div id="teaList"></div>
+  </div>
+
+
+  <label class="switch">
+    <input type="checkbox" id="steepingStyleToggle">
+    <span class="slider"></span>
+  </label>
+  <span id="steepingStyleLabel">Gong Fu</span>
+  <button id="startButton">Start Timer</button>
+  <button id="addTimeButton">Add 10 Seconds</button>
+  <button id="stopButton">Stop Timer</button>
+ <div id="canvasContainer">
+    <canvas id="canvas" width="100" height="100"></canvas>
+    <div id="timerDisplay">00:00</div>
+  </div>
+
+    <script src="script.js"></script> 
+    </body>
+</html>
