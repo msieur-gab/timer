@@ -10,9 +10,42 @@ const ctx = canvas.getContext("2d");
 const teaList = document.getElementById("teaList");
 const searchInput = document.getElementById("searchInput");
 
+// Tea Data
+const teaCategories = [
+  {
+    category: "Green Tea",
+    teas: [
+      { name: "Sencha", durations: { gongfu: 30, western: 180 } },
+      { name: "Matcha", durations: { gongfu: 20, western: 120 } },
+    ],
+  },
+  {
+    category: "Black Tea",
+    teas: [
+      { name: "Assam", durations: { gongfu: 40, western: 240 } },
+      { name: "Darjeeling", durations: { gongfu: 30, western: 180 } },
+    ],
+  },
+  {
+    category: "Oolong Tea",
+    teas: [
+      { name: "Da Hong Pao", durations: { gongfu: 60, western: 300 } },
+      { name: "Tie Guan Yin", durations: { gongfu: 50, western: 240 } },
+    ],
+  },
+  {
+    category: "Herbal Tea",
+    teas: [
+      { name: "Chamomile", durations: { gongfu: 360, western: 600 } },
+      { name: "Peppermint", durations: { gongfu: 240, western: 480 } },
+    ],
+  },
+];
+
 // State Variables
 let remainingTime, initialDuration, timerRunning = false, timerEndTime;
 let steepingStyle = "gongfu";
+let selectedTea = null;
 let wakeLock = null;
 let notificationGranted = false;
 
@@ -23,25 +56,17 @@ function formatTime(seconds) {
   return `${mins}:${secs}`;
 }
 
-// Memoized getSelectedTea function
-let selectedTeaCache = null;
 function getSelectedTea() {
-  if (selectedTeaCache) {
-    return selectedTeaCache;
-  }
-
   const selectedTeaElement = teaList.querySelector(".selected");
   if (selectedTeaElement) {
     const categoryIndex = selectedTeaElement.dataset.categoryIndex;
     const teaIndex = selectedTeaElement.dataset.index;
-    selectedTeaCache = teaCategories[categoryIndex].teas[teaIndex];
-    return selectedTeaCache;
+    return teaCategories[categoryIndex].teas[teaIndex];
   }
   return null;
 }
 
 function updateDisplayedTime() {
-  const selectedTea = getSelectedTea();
   if (selectedTea) {
     const selectedDuration = selectedTea.durations[steepingStyle];
     remainingTime = selectedDuration;
@@ -72,31 +97,12 @@ function drawCircle(progress) {
   ctx.stroke();
 }
 
-function acquireWakeLock() {
-  if ("wakeLock" in navigator && !wakeLock) {
-    navigator.wakeLock
-      .request("screen")
-      .then((wl) => (wakeLock = wl))
-      .catch((err) => console.error("Error acquiring Wake Lock:", err));
-  }
-}
-
-function releaseWakeLock() {
-  if (wakeLock) {
-    wakeLock
-      .release()
-      .then(() => (wakeLock = null))
-      .catch((err) => console.error("Error releasing Wake Lock:", err));
-  }
-}
-
 // Timer Functions
 function startTimer() {
   if (timerRunning) {
     stopTimer();
   }
 
-  const selectedTea = getSelectedTea();
   if (selectedTea) {
     const selectedDuration = selectedTea.durations[steepingStyle];
     initialDuration = selectedDuration;
@@ -133,7 +139,7 @@ function updateTimer() {
   remainingTime = Math.max(0, (timerEndTime - now) / 1000);
 
   if (remainingTime === 0) {
-    stopTimer(); // Call stopTimer directly to handle timer end logic
+    stopTimer();
     playSound('ring');
     showNotification("Tea is ready!");
   } else if (remainingTime <= 10 && remainingTime > 9.9) {
@@ -144,6 +150,10 @@ function updateTimer() {
   drawCircle((initialDuration - remainingTime) / initialDuration);
 
   requestAnimationFrame(updateTimer);
+}
+
+function updateTimerDisplay() {
+  timerDisplay.textContent = formatTime(remainingTime);
 }
 
 // Notification Functions
@@ -185,14 +195,22 @@ function playSound(soundName) {
   sounds[soundName].play();
 }
 
-function updateTimerDisplay() {
-  const minutes = Math.floor(remainingTime / 60)
-    .toString()
-    .padStart(2, "0");
-  const seconds = Math.floor(remainingTime % 60)
-    .toString()
-    .padStart(2, "0");
-  timerDisplay.textContent = `${minutes}:${seconds}`;
+function acquireWakeLock() {
+  if ("wakeLock" in navigator && !wakeLock) {
+    navigator.wakeLock
+      .request("screen")
+      .then((wl) => (wakeLock = wl))
+      .catch((err) => console.error("Error acquiring Wake Lock:", err));
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock
+      .release()
+      .then(() => (wakeLock = null))
+      .catch((err) => console.error("Error releasing Wake Lock:", err));
+  }
 }
 
 // Menu Functions
@@ -206,37 +224,6 @@ function closeMenu() {
 
 // Function to create the tea list
 function createTeaList() {
-  const teaCategories = [
-    {
-      category: "Green Tea",
-      teas: [
-        { name: "Sencha", durations: { gongfu: 30, western: 180 } },
-        { name: "Matcha", durations: { gongfu: 20, western: 120 } },
-      ],
-    },
-    {
-      category: "Black Tea",
-      teas: [
-        { name: "Assam", durations: { gongfu: 40, western: 240 } },
-        { name: "Darjeeling", durations: { gongfu: 30, western: 180 } },
-      ],
-    },
-    {
-      category: "Oolong Tea",
-      teas: [
-        { name: "Da Hong Pao", durations: { gongfu: 60, western: 300 } },
-        { name: "Tie Guan Yin", durations: { gongfu: 50, western: 240 } },
-      ],
-    },
-    {
-      category: "Herbal Tea",
-      teas: [
-        { name: "Chamomile", durations: { gongfu: 360, western: 600 } },
-        { name: "Peppermint", durations: { gongfu: 240, western: 480 } },
-      ],
-    },
-  ];
-
   teaCategories.forEach((category, index) => {
     const categoryButton = document.createElement('button');
     categoryButton.classList.add('collapsible');
@@ -283,19 +270,8 @@ function selectTea(categoryIndex, teaIndex) {
   selectedTea.classList.add('selected');
   closeMenu();
   stopTimer(); // Stop the timer when a new tea is selected
+  this.selectedTea = teaCategories[categoryIndex].teas[teaIndex];
   updateDisplayedTime();
-  selectedTeaCache = null; // Clear the memoized selectedTea
-
-  // Update the timer with the new tea's steeping duration
-  const selectedTeaObj = getSelectedTea();
-  if (selectedTeaObj) {
-    const selectedDuration = selectedTeaObj.durations[steepingStyle];
-    remainingTime = selectedDuration;
-    initialDuration = selectedDuration;
-    updateTimerDisplay();
-  } else {
-    timerDisplay.textContent = formatTime(0);
-  }
 }
 
 // Function to filter the tea list based on search input
