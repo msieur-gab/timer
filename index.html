@@ -10,15 +10,9 @@
 </head>
 <body>
 
-      <button id="menuButton">☰ Select Tea</button>
-  <div id="offCanvasMenu">
-    <a href="javascript:void(0)" onclick="closeMenu()">Close Menu &times;</a>
-		    <input type="text" id="searchInput" placeholder="Search for tea...">
-
-    <div id="teaList"></div>
-  </div>
-
-
+     <h1>Tea Timer</h1>
+  <label for="teaSelect">Choose your tea:</label>
+  <select id="teaSelect"></select>
   <label class="switch">
     <input type="checkbox" id="steepingStyleToggle">
     <span class="slider"></span>
@@ -27,10 +21,8 @@
   <button id="startButton">Start Timer</button>
   <button id="addTimeButton">Add 10 Seconds</button>
   <button id="stopButton">Stop Timer</button>
- <div id="canvasContainer">
-    <canvas id="canvas" width="100" height="100"></canvas>
-    <div id="timerDisplay">00:00</div>
-  </div>
+  <div id="timerDisplay">00:00</div>
+  <canvas id="canvas" width="200" height="200"></canvas>
 
     <script src="script.js"></script> 
     </body>
