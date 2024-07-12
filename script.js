@@ -2,6 +2,8 @@
 let startButton, addTimeButton, stopButton, steepingStyleToggle, steepingStyleLabel, timerDisplay, canvas, ctx, teaList, searchInput;
 let remainingTime, initialDuration, timerRunning = false, timerEndTime;
 let steepingStyle = "gongfu"; // Default to Gong Fu style
+// Keep Screen Awake
+let wakeLock = null;
 
 // Tea data directly in JS
 const teaCategories = [
@@ -69,6 +71,15 @@ function startTimer() {
     sounds.dummy.loop = true;
     sounds.dummy.play();
     updateTimer();
+// Acquire Wake Lock
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen')
+        .then(wl => {
+          wakeLock = wl;
+          console.log('Wake Lock acquired:', wakeLock);
+        })
+        .catch(err => console.error('Error acquiring Wake Lock:', err));
+    }
   }
 }
 
@@ -88,6 +99,14 @@ function stopTimer() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   sounds.dummy.pause();
   sounds.dummy.currentTime = 0;
+// Release Wake Lock after 5 seconds
+  if (wakeLock) {
+    setTimeout(() => {
+      wakeLock.release();
+      wakeLock = null; // Reset the variable
+      console.log('Wake Lock released');
+    }, 5000); // 5000 milliseconds = 5 seconds
+  }
 }
 
 // Function to update the timer display
