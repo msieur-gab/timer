@@ -1,11 +1,12 @@
-let timer;
-let timeLeft;
+let timerId;
+let endTime;
 let isPaused = false;
 
 self.onmessage = function(e) {
     switch (e.data.command) {
         case 'start':
-            startTimer(e.data.duration);
+            endTime = e.data.endTime;
+            startTimer();
             break;
         case 'pause':
             pauseTimer();
@@ -19,36 +20,38 @@ self.onmessage = function(e) {
     }
 };
 
-function startTimer(duration) {
-    timeLeft = duration;
+function startTimer() {
     isPaused = false;
     runTimer();
 }
 
 function runTimer() {
-    timer = setInterval(() => {
-        if (!isPaused) {
-            timeLeft--;
-            self.postMessage({ timeLeft: timeLeft });
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                self.postMessage({ command: 'finished' });
-            }
+    if (!isPaused) {
+        const now = Date.now();
+        const timeLeft = Math.max(0, Math.ceil((endTime - now) / 1000));
+        
+        self.postMessage({ timeLeft: timeLeft });
+
+        if (timeLeft > 0) {
+            timerId = setTimeout(runTimer, 1000);
+        } else {
+            self.postMessage({ command: 'finished' });
         }
-    }, 1000);
+    }
 }
 
 function pauseTimer() {
     isPaused = true;
+    clearTimeout(timerId);
 }
 
 function resumeTimer() {
     isPaused = false;
+    runTimer();
 }
 
 function resetTimer() {
-    clearInterval(timer);
-    timeLeft = 0;
-    isPaused = false;
-    self.postMessage({ timeLeft: timeLeft });
+    isPaused = true;
+    clearTimeout(timerId);
+    self.postMessage({ timeLeft: 0 });
 }
