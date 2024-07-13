@@ -17,14 +17,20 @@
                 <span id="tea-time">2-3 min</span>
             </div>
             <div id="timer-display">
-                <span id="time-left">01:24</span>
+                <span id="time-left">00:00</span>
+            </div>
+            <div id="timer-controls">
+                <input type="number" id="set-minutes" min="0" max="59" value="3">
+                <input type="number" id="set-seconds" min="0" max="59" value="0">
+                <button id="start-button">Start</button>
+                <button id="pause-button">Pause</button>
+                <button id="reset-button">Reset</button>
             </div>
             <div id="stimulation-scale">
                 <span>Stimulating</span>
                 <div class="scale-dots"></div>
                 <span>Calming</span>
             </div>
-            <button id="stop-button">Stop</button>
         </div>
     </div>
     <script src="app.js"></script>
