@@ -3,16 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minuteur Mobile</title>
+    <title>Mobile Timer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="timer">00:00:00</div>
     <input type="number" id="minutes" placeholder="Minutes">
-    <button id="startTimer">Démarrer</button>
-    <button id="stopTimer">Arrêter</button>
-    <audio id="notificationSound" src="bells-1-72261.mp3"></audio>
-
+    <button id="startTimer">Start</button>
+    <button id="stopTimer">Stop</button>
+    <button id="updateApp">Check for Updates</button>
+    <audio id="notificationSound" src="notification.mp3"></audio>
+    <div id="updatePrompt" class="hidden">
+        <p>A new version is available. Would you like to update?</p>
+        <button id="updateNow">Update Now</button>
+        <button id="updateLater">Later</button>
+    </div>
+    <div id="versionInfo"></div>
     <script src="app.js"></script>
 </body>
 </html>
