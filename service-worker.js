@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mobile-timer-cache-v1.0.1';
+const CACHE_NAME = 'mobile-timer-cache-v1.0.3';
 
 self.addEventListener('install', event => {
     console.log('Service Worker installing.');
@@ -47,15 +47,8 @@ self.addEventListener('message', event => {
 function startTimer(duration) {
     stopTimer();
     endTime = Date.now() + duration;
-    timerInterval = setInterval(() => {
-        const remainingTime = Math.max(0, endTime - Date.now());
-        if (remainingTime === 0) {
-            stopTimer();
-            notifyTimerEnded();
-        } else {
-            updateTimer(remainingTime);
-        }
-    }, 1000);
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
 }
 
 function stopTimer() {
@@ -82,18 +75,24 @@ function notifyTimerEnded() {
     });
 }
 
-function updateTimer(remainingTime) {
-    const seconds = Math.floor((remainingTime / 1000) % 60);
-    const minutes = Math.floor((remainingTime / (1000 * 60)) % 60);
-    const hours = Math.floor((remainingTime / (1000 * 60 * 60)) % 24);
-    
-    const timeString = [hours, minutes, seconds]
-        .map(unit => unit.toString().padStart(2, '0'))
-        .join(':');
+function updateTimer() {
+    const remainingTime = Math.max(0, endTime - Date.now());
+    if (remainingTime === 0) {
+        stopTimer();
+        notifyTimerEnded();
+    } else {
+        const seconds = Math.floor((remainingTime / 1000) % 60);
+        const minutes = Math.floor((remainingTime / (1000 * 60)) % 60);
+        const hours = Math.floor((remainingTime / (1000 * 60 * 60)) % 24);
+        
+        const timeString = [hours, minutes, seconds]
+            .map(unit => unit.toString().padStart(2, '0'))
+            .join(':');
 
-    self.clients.matchAll().then(clients => {
-        clients.forEach(client => {
-            client.postMessage({action: 'updateTimer', time: timeString});
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+                client.postMessage({action: 'updateTimer', time: timeString});
+            });
         });
-    });
+    }
 }

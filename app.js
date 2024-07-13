@@ -1,4 +1,4 @@
-const SW_VERSION = '1.0.2';
+const SW_VERSION = '1.0.3';
 let swRegistration;
 
 function log(message) {
@@ -78,18 +78,13 @@ document.getElementById('startTimer').addEventListener('click', async () => {
     const minutes = document.getElementById('minutes').value;
     log('Minutes: ' + minutes);
     if (minutes > 0) {
-        log('Minutes > 0, checking notification permission');
+        log('Minutes > 0, starting timer');
         if (Notification.permission !== 'granted') {
-            log('Requesting notification permission');
+            log('Notifications not granted, requesting permission');
             const permission = await Notification.requestPermission();
             log('Notification permission response: ' + permission);
         }
-        if (Notification.permission === 'granted') {
-            log('Notification permission granted, starting timer');
-            startTimer(minutes);
-        } else {
-            log('Permission denied');
-        }
+        startTimer(minutes);
     } else {
         log('Invalid minutes value');
     }
@@ -105,7 +100,7 @@ document.getElementById('stopTimer').addEventListener('click', () => {
 document.getElementById('updateApp').addEventListener('click', () => {
     if (swRegistration) {
         swRegistration.update().then(() => {
-            console.log('Service Worker update checked');
+            log('Service Worker update checked');
             window.location.reload();
         });
     }
@@ -127,7 +122,7 @@ navigator.serviceWorker.addEventListener('message', event => {
 });
 
 window.addEventListener('load', () => {
-log('Page loaded');
+    log('Page loaded');
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then(registration => {
             log('Service Worker ready state: ' + (registration.active ? 'active' : 'not active'));
@@ -137,7 +132,7 @@ log('Page loaded');
     if (savedEndTime) {
         const remainingTime = parseInt(savedEndTime) - Date.now();
         if (remainingTime > 0) {
-            startTimer(Math.floor(remainingTime / 60000));
+            startTimer(Math.ceil(remainingTime / 60000));
         } else {
             localStorage.removeItem('timerEndTime');
         }
