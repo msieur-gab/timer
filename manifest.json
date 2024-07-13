@@ -1,7 +1,8 @@
 {
   "name": "Tea Timer PWA",
   "short_name": "TeaTimer",
-  "start_url": "https://msieur-gab.github.io/timer/index.html",
+  "start_url": "index.html",
+  "scope": "https://msieur-gab.github.io/timer/"
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#333333",
