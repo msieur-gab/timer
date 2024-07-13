@@ -1,3 +1,5 @@
+const APP_VERSION = APP_CONFIG.version;
+
 // Service Worker Registration
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/service-worker.js')
@@ -104,7 +106,13 @@ function updateButtonStates() {
     setSecondsInput.disabled = isTimerRunning;
 }
 
+function updateVersionDisplay() {
+    document.getElementById('version-info').textContent = APP_VERSION;
+}
+
+
 // Event Listeners
+document.addEventListener('DOMContentLoaded', updateVersionDisplay);
 startButton.addEventListener('click', () => isTimerRunning ? resumeTimer() : startTimer());
 pauseButton.addEventListener('click', pauseTimer);
 resetButton.addEventListener('click', resetTimer);

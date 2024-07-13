@@ -1,4 +1,9 @@
-const CACHE_NAME = 'tea-timer-cache-v1';
+// Importons la configuration
+importScripts('config.js');
+
+const CACHE_VERSION = APP_CONFIG.version;
+const CACHE_NAME = `timer-version-${CACHE_VERSION}`;
+
 const urlsToCache = [
     '/',
     '/index.html',
@@ -6,7 +11,8 @@ const urlsToCache = [
     '/app.js',
     '/timer-worker.js',
     '/icon.png',
-    '/notification.mp3'
+    '/notification.mp3',
+    '/config.js'
 ];
 
 

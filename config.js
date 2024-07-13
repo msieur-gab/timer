@@ -1,0 +1,4 @@
+const APP_CONFIG = {
+    version: 'v0.0.1'
+};
+self.APP_CONFIG = APP_CONFIG;
