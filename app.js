@@ -1,13 +1,49 @@
+const SW_VERSION = '1.0.1';
 let swRegistration;
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-        .then(registration => {
-            console.log('Service Worker registered');
-            swRegistration = registration;
-        })
-        .catch(error => console.log('Service Worker registration error:', error));
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' })
+            .then(registration => {
+                console.log('Service Worker registered');
+                swRegistration = registration;
+                checkForSwUpdate(registration);
+            })
+            .catch(error => console.log('Service Worker registration error:', error));
+    }
 }
+
+function checkForSwUpdate(registration) {
+    registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdatePrompt();
+            }
+        });
+    });
+}
+
+function showUpdatePrompt() {
+    document.getElementById('updatePrompt').classList.remove('hidden');
+}
+
+document.getElementById('updateNow').addEventListener('click', () => {
+    document.getElementById('updatePrompt').classList.add('hidden');
+    window.location.reload();
+});
+
+document.getElementById('updateLater').addEventListener('click', () => {
+    document.getElementById('updatePrompt').classList.add('hidden');
+});
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+        registration.update();
+    });
+}
+
+registerServiceWorker();
 
 function startTimer(minutes) {
     if (swRegistration && swRegistration.active) {
@@ -43,6 +79,15 @@ document.getElementById('stopTimer').addEventListener('click', () => {
     }
 });
 
+document.getElementById('updateApp').addEventListener('click', () => {
+    if (swRegistration) {
+        swRegistration.update().then(() => {
+            console.log('Service Worker update checked');
+            window.location.reload();
+        });
+    }
+});
+
 function playNotificationSound() {
     document.getElementById('notificationSound').play();
 }
@@ -68,4 +113,5 @@ window.addEventListener('load', () => {
             localStorage.removeItem('timerEndTime');
         }
     }
+    document.getElementById('versionInfo').textContent = `v${SW_VERSION}`;
 });
