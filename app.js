@@ -1,7 +1,24 @@
+let swRegistration;
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js')
-        .then(registration => console.log('Service Worker enregistré'))
-        .catch(error => console.log('Erreur d enregistrement du Service Worker:', error));
+        .then(registration => {
+            console.log('Service Worker registered');
+            swRegistration = registration;
+        })
+        .catch(error => console.log('Service Worker registration error:', error));
+}
+
+function startTimer(minutes) {
+    if (swRegistration && swRegistration.active) {
+        swRegistration.active.postMessage({
+            action: 'startTimer',
+            duration: minutes * 60 * 1000
+        });
+        localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
+    } else {
+        console.error('Service Worker not active');
+    }
 }
 
 document.getElementById('startTimer').addEventListener('click', () => {
@@ -20,17 +37,11 @@ document.getElementById('startTimer').addEventListener('click', () => {
 });
 
 document.getElementById('stopTimer').addEventListener('click', () => {
-    navigator.serviceWorker.controller.postMessage({action: 'stopTimer'});
-    localStorage.removeItem('timerEndTime');
+    if (swRegistration && swRegistration.active) {
+        swRegistration.active.postMessage({action: 'stopTimer'});
+        localStorage.removeItem('timerEndTime');
+    }
 });
-
-function startTimer(minutes) {
-    navigator.serviceWorker.controller.postMessage({
-        action: 'startTimer',
-        duration: minutes * 60 * 1000
-    });
-    localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
-}
 
 function playNotificationSound() {
     document.getElementById('notificationSound').play();
