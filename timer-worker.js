@@ -1,25 +1,54 @@
 let timer;
+let timeLeft;
+let isPaused = false;
 
 self.onmessage = function(e) {
-    if (e.data.command === 'start') {
-        startTimer(e.data.duration);
-    } else if (e.data.command === 'stop') {
-        stopTimer();
+    switch (e.data.command) {
+        case 'start':
+            startTimer(e.data.duration);
+            break;
+        case 'pause':
+            pauseTimer();
+            break;
+        case 'resume':
+            resumeTimer();
+            break;
+        case 'reset':
+            resetTimer();
+            break;
     }
 };
 
 function startTimer(duration) {
-    let timeLeft = duration;
+    timeLeft = duration;
+    isPaused = false;
+    runTimer();
+}
+
+function runTimer() {
     timer = setInterval(() => {
-        timeLeft--;
-        self.postMessage({ timeLeft: timeLeft });
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            self.postMessage({ command: 'finished' });
+        if (!isPaused) {
+            timeLeft--;
+            self.postMessage({ timeLeft: timeLeft });
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                self.postMessage({ command: 'finished' });
+            }
         }
     }, 1000);
 }
 
-function stopTimer() {
+function pauseTimer() {
+    isPaused = true;
+}
+
+function resumeTimer() {
+    isPaused = false;
+}
+
+function resetTimer() {
     clearInterval(timer);
+    timeLeft = 0;
+    isPaused = false;
+    self.postMessage({ timeLeft: timeLeft });
 }
