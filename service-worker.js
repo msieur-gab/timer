@@ -8,12 +8,10 @@ const urlsToCache = [
     'index.html',
     'style.css',
     'app.js',
-    'timer-worker.js',
-    'icon.png',
-    'config.js'
+    'config.js',
+    'icon.png'
 ];
 
-// Séparez le fichier audio des autres ressources
 const audioToCache = 'notification.mp3';
 
 self.addEventListener('install', event => {
@@ -23,29 +21,16 @@ self.addEventListener('install', event => {
             .then(cache => {
                 console.log('Service Worker: Caching files');
                 
-                // Mise en cache des fichiers réguliers
                 const regularCaching = cache.addAll(urlsToCache);
                 
-                // Mise en cache spéciale pour le fichier audio
-                const audioCaching = fetch(audioToCache)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Failed to fetch audio file');
-                        }
-                        return cache.put(audioToCache, response);
-                    })
-                    .catch(error => {
-                        console.error('Failed to cache audio file:', error);
-                    });
+                const audioCaching = fetch(audioToCache, { mode: 'no-cors' })
+                    .then(response => cache.put(audioToCache, response))
+                    .catch(error => console.error('Failed to cache audio file:', error));
 
                 return Promise.all([regularCaching, audioCaching]);
             })
-            .then(() => {
-                console.log('Service Worker: All files cached');
-            })
-            .catch(error => {
-                console.error('Service Worker: Caching failed:', error);
-            })
+            .then(() => console.log('Service Worker: All files cached'))
+            .catch(error => console.error('Service Worker: Caching failed:', error))
     );
 });
 
@@ -66,16 +51,38 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-    console.log('Service Worker: Fetching', event.request.url);
     event.respondWith(
         caches.match(event.request)
-            .then(response => {
-                if (response) {
-                    console.log('Service Worker: Found in cache', event.request.url);
-                    return response;
-                }
-                console.log('Service Worker: Fetching from network', event.request.url);
-                return fetch(event.request);
-            })
+            .then(response => response || fetch(event.request))
     );
 });
+
+self.addEventListener('sync', event => {
+    if (event.tag === 'checkTimer') {
+        event.waitUntil(checkTimerAndNotify());
+    }
+});
+
+function checkTimerAndNotify() {
+    return new Promise((resolve, reject) => {
+        const checkInterval = setInterval(() => {
+            const endTime = parseInt(localStorage.getItem('timerEndTime'));
+            if (!endTime) {
+                clearInterval(checkInterval);
+                resolve();
+                return;
+            }
+
+            const now = Date.now();
+            if (now >= endTime) {
+                clearInterval(checkInterval);
+                self.registration.showNotification('Tea is ready!', {
+                    body: 'Your tea has finished steeping.',
+                    icon: '/icon.png'
+                });
+                localStorage.removeItem('timerEndTime');
+                resolve();
+            }
+        }, 1000);
+    });
+}
