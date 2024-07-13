@@ -1,3 +1,6 @@
+let timerInterval;
+let endTime;
+
 self.addEventListener('install', event => {
     self.skipWaiting();
 });
@@ -9,37 +12,61 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
     if (event.data.action === 'startTimer') {
         startTimer(event.data.duration);
+    } else if (event.data.action === 'stopTimer') {
+        stopTimer();
     }
 });
 
 function startTimer(duration) {
-    console.log(`Starting ${duration} second timer`);
-    setTimeout(() => {
-        console.log('Timer complete');
-        notifyTimerComplete();
-    }, duration * 1000);
+    stopTimer();
+    endTime = Date.now() + duration;
+    timerInterval = setInterval(() => {
+        const remainingTime = Math.max(0, endTime - Date.now());
+        if (remainingTime === 0) {
+            stopTimer();
+            notifyTimerEnded();
+        } else {
+            updateTimer(remainingTime);
+        }
+    }, 1000);
 }
 
-function notifyTimerComplete() {
+function stopTimer() {
+    clearInterval(timerInterval);
     self.clients.matchAll().then(clients => {
         clients.forEach(client => {
-            client.postMessage({action: 'timerComplete'});
+            client.postMessage({action: 'updateTimer', time: '00:00:00'});
         });
     });
+}
 
-    // Check notification permission before showing notification
-    self.registration.pushManager.getSubscription()
-        .then(subscription => {
-            if (subscription) {
-                // Permission was granted, show notification
-                return self.registration.showNotification('Tea Timer', {
-                    body: 'Your tea is ready!',
-                    icon: '/icon.png', // Make sure to have an icon file
-                    vibrate: [200, 100, 200]
-                });
-            } else {
-                console.log('No push subscription, cannot show notification');
-            }
-        })
-        .catch(error => console.log('Error checking push subscription:', error));
+function notifyTimerEnded() {
+    self.registration.showNotification('Minuteur terminé !', {
+        body: 'Le temps est écoulé.',
+        icon: 'icon.png',
+        vibrate: [200, 100, 200],
+        requireInteraction: true
+    });
+
+    self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+            client.postMessage({action: 'timerEnded'});
+        });
+    });
+}
+
+function updateTimer(remainingTime) {
+    const seconds = Math.floor((remainingTime / 1000) % 60);
+    const minutes = Math.floor((remainingTime / (1000 * 60)) % 60);
+    const hours = Math.floor((remainingTime / (1000 * 60 * 60)) % 24);
+    
+    const timeString = [hours, minutes, seconds]
+        .map(unit => unit.toString().padStart(2, '0'))
+        .join(':');
+
+    self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+            client.postMessage({action: 'updateTimer', time: timeString});
+        });
+    });
 }
