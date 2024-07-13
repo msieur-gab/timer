@@ -1,35 +1,28 @@
-const CACHE_NAME = 'mobile-timer-cache-v1.0.4';
+const CACHE_NAME = 'mobile-timer-cache-v1.0.5';
 
 self.addEventListener('install', event => {
-    console.log('Service Worker installing.');
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll([
-                '/',
-                '/index.html',
-                '/app.js',
-                '/style.css',
-                '/notification.mp3',
-                '/icon.png'
-            ]);
-        })
-    );
+  console.log('Service Worker installing.');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll([
+        '/',
+        '/index.html',
+        '/app.js',
+        '/style.css',
+        '/notification.mp3',
+        '/icon.png' // Ensure this path is correct
+      ]))
+  );
 });
 
 self.addEventListener('activate', event => {
-    console.log('Service Worker activating.');
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cache => {
-                    if (cache !== CACHE_NAME) {
-                        console.log('Service Worker: clearing old cache');
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
-    );
+  console.log('Service Worker activating.');
+  event.waitUntil(
+    caches.keys().then(cacheNames => Promise.all(
+      cacheNames.filter(cache => cache !== CACHE_NAME)
+        .map(cache => caches.delete(cache))
+    ))
+  );
 });
 
 let timerInterval;
