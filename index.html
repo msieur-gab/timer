@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tea Timer</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
-        button { margin: 10px; padding: 10px 20px; font-size: 16px; }
-    </style>
+    <title>Minuteur Mobile</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Tea Timer</h1>
-    <div>
-        <button id="timer1">1 Minute</button>
-        <button id="timer2">2 Minutes</button>
-        <button id="timer3">3 Minutes</button>
-    </div>
-    <div id="status"></div>
+    <div id="timer">00:00:00</div>
+    <input type="number" id="minutes" placeholder="Minutes">
+    <button id="startTimer">Démarrer</button>
+    <button id="stopTimer">Arrêter</button>
+    <audio id="notificationSound" src="bells-1-72261.mp3"></audio>
+
     <script src="app.js"></script>
 </body>
 </html>
