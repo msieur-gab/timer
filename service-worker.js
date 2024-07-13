@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mobile-timer-cache-v1.0.3';
+const CACHE_NAME = 'mobile-timer-cache-v1.0.4';
 
 self.addEventListener('install', event => {
     console.log('Service Worker installing.');
@@ -41,6 +41,8 @@ self.addEventListener('message', event => {
         startTimer(event.data.duration);
     } else if (event.data.action === 'stopTimer') {
         stopTimer();
+    } else if (event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
     }
 });
 
