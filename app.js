@@ -1,4 +1,4 @@
-const SW_VERSION = '1.0.4';
+const SW_VERSION = '1.0.5';
 let swRegistration;
 
 function log(message) {
@@ -59,52 +59,27 @@ if ('serviceWorker' in navigator) {
 
 registerServiceWorker();
 
-function startTimer(minutes) {
-    log('startTimer called with minutes: ' + minutes);
-    if (swRegistration) {
-        if (swRegistration.active) {
-            log('Service Worker is active, sending message');
-            swRegistration.active.postMessage({
-                action: 'startTimer',
-                duration: minutes * 60 * 1000
-            });
-            localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
-        } else {
-            log('Service Worker is not active, waiting for activation');
-            swRegistration.waiting.postMessage({type: 'SKIP_WAITING'});
-            swRegistration.addEventListener('activate', () => {
-                log('Service Worker activated, starting timer');
-                startTimer(minutes);
-            });
-        }
-    } else {
-        log('Service Worker registration not found');
-    }
+function startTimer(registration, minutes) { 
+  if (registration.active) {
+    registration.active.postMessage({
+      action: 'startTimer',
+      duration: minutes * 60 * 1000
+    });
+    localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
+  }
 }
+document.getElementById('startTimer').addEventListener('click', () => {
+  const minutes = parseInt(document.getElementById('minutes').value, 10); 
 
-document.getElementById('startTimer').addEventListener('click', async () => {
-    log('Start button clicked');
-    const minutes = document.getElementById('minutes').value;
-    log('Minutes: ' + minutes);
-    if (minutes > 0) {
-        log('Minutes > 0, starting timer');
-        if (Notification.permission !== 'granted') {
-            log('Notifications not granted, requesting permission');
-            const permission = await Notification.requestPermission();
-            log('Notification permission response: ' + permission);
-        }
-        if (swRegistration) {
-            startTimer(minutes);
-        } else {
-            log('Waiting for Service Worker registration');
-            navigator.serviceWorker.ready.then(() => {
-                log('Service Worker ready, starting timer');
-                startTimer(minutes);
-            });
-        }
-    } else {
-        log('Invalid minutes value');
+  if (!isNaN(minutes) && minutes > 0) {
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission();
     }
+
+    navigator.serviceWorker.ready.then(registration => {
+      startTimer(registration, minutes); 
+    });
+  }
 });
 
 document.getElementById('stopTimer').addEventListener('click', () => {
