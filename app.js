@@ -1,68 +1,60 @@
-const timer1 = document.getElementById('timer1');
-const timer2 = document.getElementById('timer2');
-const timer3 = document.getElementById('timer3');
-const status = document.getElementById('status');
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+        .then(registration => console.log('Service Worker enregistré'))
+        .catch(error => console.log('Erreur d'enregistrement du Service Worker:', error));
+}
 
-// Request notification permission
-function requestNotificationPermission() {
-    return new Promise((resolve, reject) => {
-        if (!('Notification' in window)) {
-            reject('This browser does not support notifications.');
+document.getElementById('startTimer').addEventListener('click', () => {
+    const minutes = document.getElementById('minutes').value;
+    if (minutes > 0) {
+        if (Notification.permission === 'granted') {
+            startTimer(minutes);
         } else {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
-                    console.log('Notification permission granted.');
-                    resolve(true);
-                } else {
-                    console.log('Notification permission denied.');
-                    resolve(false);
+                    startTimer(minutes);
                 }
             });
         }
-    });
-}
-
-// Register service worker
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-        .then(registration => {
-            console.log('Service Worker registered with scope:', registration.scope);
-            return requestNotificationPermission();
-        })
-        .then(permissionGranted => {
-            if (permissionGranted) {
-                console.log('Notification permission granted.');
-            } else {
-                console.log('Notification permission denied.');
-            }
-        })
-        .catch(error => {
-            console.log('Error during setup:', error);
-        });
-}
-
-// Function to start a timer
-function startTimer(minutes) {
-    if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            action: 'startTimer',
-            duration: minutes * 60 // Convert to seconds
-        });
-        status.textContent = `${minutes} minute timer started`;
-    } else {
-        status.textContent = 'Service Worker not yet active. Please try again.';
     }
+});
+
+document.getElementById('stopTimer').addEventListener('click', () => {
+    navigator.serviceWorker.controller.postMessage({action: 'stopTimer'});
+    localStorage.removeItem('timerEndTime');
+});
+
+function startTimer(minutes) {
+    navigator.serviceWorker.controller.postMessage({
+        action: 'startTimer',
+        duration: minutes * 60 * 1000
+    });
+    localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
 }
 
-// Event listeners for buttons
-timer1.addEventListener('click', () => startTimer(1));
-timer2.addEventListener('click', () => startTimer(2));
-timer3.addEventListener('click', () => startTimer(3));
+function playNotificationSound() {
+    document.getElementById('notificationSound').play();
+}
 
-// Listen for messages from the service worker
 navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data.action === 'timerComplete') {
-        status.textContent = 'Timer completed!';
-        // You could play a sound here if desired
+    if (event.data.action === 'updateTimer') {
+        document.getElementById('timer').textContent = event.data.time;
+    } else if (event.data.action === 'timerEnded') {
+        playNotificationSound();
+        if ('vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    }
+});
+
+window.addEventListener('load', () => {
+    const savedEndTime = localStorage.getItem('timerEndTime');
+    if (savedEndTime) {
+        const remainingTime = parseInt(savedEndTime) - Date.now();
+        if (remainingTime > 0) {
+            startTimer(Math.floor(remainingTime / 60000));
+        } else {
+            localStorage.removeItem('timerEndTime');
+        }
     }
 });
