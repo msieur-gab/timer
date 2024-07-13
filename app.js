@@ -59,11 +59,6 @@ if ('serviceWorker' in navigator) {
 
 registerServiceWorker();
 
-javascriptCopyconst SW_VERSION = '1.0.4';
-let swRegistration;
-
-// ... (autres fonctions restent les mêmes)
-
 function startTimer(minutes) {
     log('startTimer called with minutes: ' + minutes);
     if (swRegistration) {
@@ -111,19 +106,27 @@ document.getElementById('startTimer').addEventListener('click', async () => {
         log('Invalid minutes value');
     }
 });
+
 document.getElementById('stopTimer').addEventListener('click', () => {
+    log('Stop button clicked');
     if (swRegistration && swRegistration.active) {
+        log('Sending stop message to Service Worker');
         swRegistration.active.postMessage({action: 'stopTimer'});
         localStorage.removeItem('timerEndTime');
+    } else {
+        log('Service Worker not active, cannot stop timer');
     }
 });
 
 document.getElementById('updateApp').addEventListener('click', () => {
+    log('Check for updates clicked');
     if (swRegistration) {
         swRegistration.update().then(() => {
             log('Service Worker update checked');
             window.location.reload();
         });
+    } else {
+        log('Service Worker not registered, cannot check for updates');
     }
 });
 
@@ -132,6 +135,7 @@ function playNotificationSound() {
 }
 
 navigator.serviceWorker.addEventListener('message', event => {
+    log('Message received from Service Worker: ' + JSON.stringify(event.data));
     if (event.data.action === 'updateTimer') {
         document.getElementById('timer').textContent = event.data.time;
     } else if (event.data.action === 'timerEnded') {
@@ -153,8 +157,10 @@ window.addEventListener('load', () => {
     if (savedEndTime) {
         const remainingTime = parseInt(savedEndTime) - Date.now();
         if (remainingTime > 0) {
+            log('Resuming timer from saved state');
             startTimer(Math.ceil(remainingTime / 60000));
         } else {
+            log('Saved timer already expired, removing from storage');
             localStorage.removeItem('timerEndTime');
         }
     }
