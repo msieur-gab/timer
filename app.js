@@ -4,24 +4,33 @@ const timerWorker = new Worker('timer-worker.js');
 let wakeLock = null;
 const audio = new Audio('notification.mp3');
 let isTimerRunning = false;
+let initialDuration = 0;
 
 const timeLeftDisplay = document.getElementById('time-left');
-const startButton = document.getElementById('start-button');
-const pauseButton = document.getElementById('pause-button');
+const startPauseButton = document.getElementById('start-pause-button');
+const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
 const setMinutesInput = document.getElementById('set-minutes');
 const setSecondsInput = document.getElementById('set-seconds');
 
+async function startPauseTimer() {
+    if (!isTimerRunning) {
+        await startTimer();
+    } else {
+        pauseTimer();
+    }
+}
+
 async function startTimer() {
     const minutes = parseInt(setMinutesInput.value);
     const seconds = parseInt(setSecondsInput.value);
-    const duration = minutes * 60 + seconds;
+    initialDuration = minutes * 60 + seconds;
 
-    if (duration <= 0) return;
+    if (initialDuration <= 0) return;
 
     try {
         wakeLock = await navigator.wakeLock.request('screen');
-        timerWorker.postMessage({ command: 'start', duration: duration });
+        timerWorker.postMessage({ command: 'start', duration: initialDuration });
         isTimerRunning = true;
         updateButtonStates();
     } catch (err) {
@@ -35,16 +44,14 @@ function pauseTimer() {
     updateButtonStates();
 }
 
-function resumeTimer() {
-    timerWorker.postMessage({ command: 'resume' });
-    isTimerRunning = true;
-    updateButtonStates();
+function addTenSeconds() {
+    timerWorker.postMessage({ command: 'addTime', seconds: 10 });
 }
 
 function resetTimer() {
-    timerWorker.postMessage({ command: 'reset' });
+    timerWorker.postMessage({ command: 'reset', duration: initialDuration });
     isTimerRunning = false;
-    updateTimerDisplay(0);
+    updateTimerDisplay(initialDuration);
     updateButtonStates();
 }
 
@@ -67,11 +74,16 @@ function formatTime(seconds) {
 }
 
 function timerFinished() {
-    if (wakeLock) wakeLock.release();
+    if (wakeLock) {
+        wakeLock.release().then(() => {
+            console.log('Wake Lock released');
+        });
+    }
     playNotificationSound();
     showNotification();
     isTimerRunning = false;
     updateButtonStates();
+    timerWorker.postMessage({ command: 'stop' });
 }
 
 function playNotificationSound() {
@@ -88,10 +100,9 @@ function showNotification() {
 }
 
 function updateButtonStates() {
-    startButton.textContent = isTimerRunning ? "Resume" : "Start";
-    startButton.disabled = isTimerRunning;
-    pauseButton.disabled = !isTimerRunning;
-    resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === "00:00";
+    startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
+    addTenSecondsButton.disabled = !isTimerRunning;
+    resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
     setMinutesInput.disabled = isTimerRunning;
     setSecondsInput.disabled = isTimerRunning;
 }
@@ -110,6 +121,10 @@ window.addEventListener('load', () => {
     updateButtonStates();
 });
 
-startButton.addEventListener('click', () => isTimerRunning ? resumeTimer() : startTimer());
-pauseButton.addEventListener('click', pauseTimer);
+startPauseButton.addEventListener('click', startPauseTimer);
+addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
+
+if ('Notification' in window && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+}
