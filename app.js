@@ -1,4 +1,4 @@
-const SW_VERSION = '1.0.3';
+const SW_VERSION = '1.0.4';
 let swRegistration;
 
 function log(message) {
@@ -59,17 +59,31 @@ if ('serviceWorker' in navigator) {
 
 registerServiceWorker();
 
+javascriptCopyconst SW_VERSION = '1.0.4';
+let swRegistration;
+
+// ... (autres fonctions restent les mêmes)
+
 function startTimer(minutes) {
     log('startTimer called with minutes: ' + minutes);
-    if (swRegistration && swRegistration.active) {
-        log('Service Worker is active, sending message');
-        swRegistration.active.postMessage({
-            action: 'startTimer',
-            duration: minutes * 60 * 1000
-        });
-        localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
+    if (swRegistration) {
+        if (swRegistration.active) {
+            log('Service Worker is active, sending message');
+            swRegistration.active.postMessage({
+                action: 'startTimer',
+                duration: minutes * 60 * 1000
+            });
+            localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
+        } else {
+            log('Service Worker is not active, waiting for activation');
+            swRegistration.waiting.postMessage({type: 'SKIP_WAITING'});
+            swRegistration.addEventListener('activate', () => {
+                log('Service Worker activated, starting timer');
+                startTimer(minutes);
+            });
+        }
     } else {
-        log('Service Worker not active');
+        log('Service Worker registration not found');
     }
 }
 
@@ -84,12 +98,19 @@ document.getElementById('startTimer').addEventListener('click', async () => {
             const permission = await Notification.requestPermission();
             log('Notification permission response: ' + permission);
         }
-        startTimer(minutes);
+        if (swRegistration) {
+            startTimer(minutes);
+        } else {
+            log('Waiting for Service Worker registration');
+            navigator.serviceWorker.ready.then(() => {
+                log('Service Worker ready, starting timer');
+                startTimer(minutes);
+            });
+        }
     } else {
         log('Invalid minutes value');
     }
 });
-
 document.getElementById('stopTimer').addEventListener('click', () => {
     if (swRegistration && swRegistration.active) {
         swRegistration.active.postMessage({action: 'stopTimer'});
