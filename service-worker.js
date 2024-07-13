@@ -1,4 +1,3 @@
-// Importons la configuration
 importScripts('config.js');
 
 const CACHE_VERSION = APP_CONFIG.version;
@@ -16,44 +15,49 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+    console.log('Service Worker: Installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                return Promise.all(
-                    urlsToCache.map(url => {
-                        return cache.add(url).catch(err => {
-                            console.error(`Failed to cache ${url}: ${err}`);
-                        });
-                    })
-                );
+                console.log('Service Worker: Caching files');
+                return cache.addAll(urlsToCache);
+            })
+            .then(() => {
+                console.log('Service Worker: All files cached');
+            })
+            .catch(error => {
+                console.error('Service Worker: Caching failed:', error);
             })
     );
 });
 
-// self.addEventListener('install', event => {
-//     event.waitUntil(
-//         caches.open(CACHE_NAME)
-//             .then(cache => cache.addAll(urlsToCache))
-//     );
-// });
-
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => response || fetch(event.request))
-    );
-});
-
 self.addEventListener('activate', event => {
+    console.log('Service Worker: Activating...');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
+                    if (cacheName.startsWith('timer-version-') && cacheName !== CACHE_NAME) {
+                        console.log('Service Worker: Deleting old cache', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
         })
+    );
+});
+
+self.addEventListener('fetch', event => {
+    console.log('Service Worker: Fetching', event.request.url);
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                if (response) {
+                    console.log('Service Worker: Found in cache', event.request.url);
+                    return response;
+                }
+                console.log('Service Worker: Fetching from network', event.request.url);
+                return fetch(event.request);
+            })
     );
 });

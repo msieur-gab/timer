@@ -33,14 +33,14 @@
                 <span>Calming</span>
             </div>
         </div>
-         <div id="version-info">v0.0.1</div>
+        <div id="version-info"></div>
     </div>
     <script src="app.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => console.log('ServiceWorker registered'))
-                .catch(error => console.log('ServiceWorker registration failed:', error));
+                .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+                .catch(error => console.error('ServiceWorker registration failed: ', error));
         }
     </script>
 </body>

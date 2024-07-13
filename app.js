@@ -1,20 +1,10 @@
 const APP_VERSION = APP_CONFIG.version;
 
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => console.log('ServiceWorker registered'))
-        .catch(error => console.log('ServiceWorker registration failed:', error));
-}
-
-// Web Worker for Timer
 const timerWorker = new Worker('timer-worker.js');
-
 let wakeLock = null;
 const audio = new Audio('notification.mp3');
 let isTimerRunning = false;
 
-// DOM Elements
 const timeLeftDisplay = document.getElementById('time-left');
 const startButton = document.getElementById('start-button');
 const pauseButton = document.getElementById('pause-button');
@@ -92,7 +82,7 @@ function showNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
         new Notification('Tea is ready!', {
             body: 'Your tea has finished steeping.',
-            icon: '/icon.png'
+            icon: 'icon.png'
         });
     }
 }
@@ -107,15 +97,19 @@ function updateButtonStates() {
 }
 
 function updateVersionDisplay() {
-    document.getElementById('version-info').textContent = APP_VERSION;
+    const versionElement = document.getElementById('version-info');
+    if (versionElement) {
+        versionElement.textContent = APP_VERSION;
+    } else {
+        console.warn("Element 'version-info' not found in the DOM");
+    }
 }
 
+window.addEventListener('load', () => {
+    updateVersionDisplay();
+    updateButtonStates();
+});
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', updateVersionDisplay);
 startButton.addEventListener('click', () => isTimerRunning ? resumeTimer() : startTimer());
 pauseButton.addEventListener('click', pauseTimer);
 resetButton.addEventListener('click', resetTimer);
-
-// Initialize button states
-updateButtonStates();
