@@ -1,15 +1,29 @@
-const SW_VERSION = '1.0.1';
+const SW_VERSION = '1.0.2';
 let swRegistration;
+
+function log(message) {
+    console.log(message);
+    const logContainer = document.getElementById('logContainer');
+    const logElement = document.createElement('div');
+    logElement.textContent = message;
+    logContainer.appendChild(logElement);
+    logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+document.getElementById('toggleLogs').addEventListener('click', () => {
+    const logContainer = document.getElementById('logContainer');
+    logContainer.style.display = logContainer.style.display === 'none' ? 'block' : 'none';
+});
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' })
             .then(registration => {
-                console.log('Service Worker registered');
+                log('Service Worker registered');
                 swRegistration = registration;
                 checkForSwUpdate(registration);
             })
-            .catch(error => console.log('Service Worker registration error:', error));
+            .catch(error => log('Service Worker registration error: ' + error));
     }
 }
 
@@ -46,29 +60,38 @@ if ('serviceWorker' in navigator) {
 registerServiceWorker();
 
 function startTimer(minutes) {
+    log('startTimer called with minutes: ' + minutes);
     if (swRegistration && swRegistration.active) {
+        log('Service Worker is active, sending message');
         swRegistration.active.postMessage({
             action: 'startTimer',
             duration: minutes * 60 * 1000
         });
         localStorage.setItem('timerEndTime', Date.now() + minutes * 60 * 1000);
     } else {
-        console.error('Service Worker not active');
+        log('Service Worker not active');
     }
 }
 
-document.getElementById('startTimer').addEventListener('click', () => {
+document.getElementById('startTimer').addEventListener('click', async () => {
+    log('Start button clicked');
     const minutes = document.getElementById('minutes').value;
+    log('Minutes: ' + minutes);
     if (minutes > 0) {
+        log('Minutes > 0, checking notification permission');
+        if (Notification.permission !== 'granted') {
+            log('Requesting notification permission');
+            const permission = await Notification.requestPermission();
+            log('Notification permission response: ' + permission);
+        }
         if (Notification.permission === 'granted') {
+            log('Notification permission granted, starting timer');
             startTimer(minutes);
         } else {
-            Notification.requestPermission().then(permission => {
-                if (permission === 'granted') {
-                    startTimer(minutes);
-                }
-            });
+            log('Permission denied');
         }
+    } else {
+        log('Invalid minutes value');
     }
 });
 
@@ -104,6 +127,12 @@ navigator.serviceWorker.addEventListener('message', event => {
 });
 
 window.addEventListener('load', () => {
+log('Page loaded');
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+            log('Service Worker ready state: ' + (registration.active ? 'active' : 'not active'));
+        });
+    }
     const savedEndTime = localStorage.getItem('timerEndTime');
     if (savedEndTime) {
         const remainingTime = parseInt(savedEndTime) - Date.now();
