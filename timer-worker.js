@@ -1,4 +1,4 @@
-let timer;
+let timerId;
 let timeLeft;
 let isPaused = false;
 
@@ -10,11 +10,14 @@ self.onmessage = function(e) {
         case 'pause':
             pauseTimer();
             break;
-        case 'resume':
-            resumeTimer();
-            break;
         case 'reset':
-            resetTimer();
+            resetTimer(e.data.duration);
+            break;
+        case 'addTime':
+            addTime(e.data.seconds);
+            break;
+        case 'stop':
+            stopTimer();
             break;
     }
 };
@@ -26,29 +29,35 @@ function startTimer(duration) {
 }
 
 function runTimer() {
-    timer = setInterval(() => {
-        if (!isPaused) {
+    if (!isPaused) {
+        self.postMessage({ timeLeft: timeLeft });
+        if (timeLeft > 0) {
             timeLeft--;
-            self.postMessage({ timeLeft: timeLeft });
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                self.postMessage({ command: 'finished' });
-            }
+            timerId = setTimeout(runTimer, 1000);
+        } else {
+            self.postMessage({ command: 'finished' });
         }
-    }, 1000);
+    }
 }
 
 function pauseTimer() {
     isPaused = true;
+    clearTimeout(timerId);
 }
 
-function resumeTimer() {
-    isPaused = false;
-}
-
-function resetTimer() {
-    clearInterval(timer);
-    timeLeft = 0;
-    isPaused = false;
+function resetTimer(duration) {
+    clearTimeout(timerId);
+    timeLeft = duration;
+    isPaused = true;
     self.postMessage({ timeLeft: timeLeft });
+}
+
+function addTime(seconds) {
+    timeLeft += seconds;
+    self.postMessage({ timeLeft: timeLeft });
+}
+
+function stopTimer() {
+    clearTimeout(timerId);
+    isPaused = true;
 }
