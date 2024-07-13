@@ -10,9 +10,11 @@ const urlsToCache = [
     'app.js',
     'timer-worker.js',
     'icon.png',
-    'notification.mp3',
     'config.js'
 ];
+
+// Séparez le fichier audio des autres ressources
+const audioToCache = 'notification.mp3';
 
 self.addEventListener('install', event => {
     console.log('Service Worker: Installing...');
@@ -20,18 +22,29 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Service Worker: Caching files');
-                return Promise.all(
-                    urlsToCache.map(url => {
-                        return cache.add(url).catch(error => {
-                            console.error(`Failed to cache ${url}: ${error}`);
-                            // Continue avec les autres fichiers même si celui-ci échoue
-                            return Promise.resolve();
-                        });
+                
+                // Mise en cache des fichiers réguliers
+                const regularCaching = cache.addAll(urlsToCache);
+                
+                // Mise en cache spéciale pour le fichier audio
+                const audioCaching = fetch(audioToCache)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch audio file');
+                        }
+                        return cache.put(audioToCache, response);
                     })
-                );
+                    .catch(error => {
+                        console.error('Failed to cache audio file:', error);
+                    });
+
+                return Promise.all([regularCaching, audioCaching]);
             })
             .then(() => {
-                console.log('Service Worker: All available files cached');
+                console.log('Service Worker: All files cached');
+            })
+            .catch(error => {
+                console.error('Service Worker: Caching failed:', error);
             })
     );
 });
