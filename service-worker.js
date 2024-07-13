@@ -10,6 +10,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('message', event => {
+    console.log('Message received in SW:', event.data);
     if (event.data.action === 'startTimer') {
         startTimer(event.data.duration);
     } else if (event.data.action === 'stopTimer') {
@@ -41,8 +42,8 @@ function stopTimer() {
 }
 
 function notifyTimerEnded() {
-    self.registration.showNotification('Minuteur terminé !', {
-        body: 'Le temps est écoulé.',
+    self.registration.showNotification('Timer Ended!', {
+        body: 'Time is up.',
         icon: 'icon.png',
         vibrate: [200, 100, 200],
         requireInteraction: true
