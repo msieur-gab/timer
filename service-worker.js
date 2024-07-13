@@ -4,14 +4,14 @@ const CACHE_VERSION = APP_CONFIG.version;
 const CACHE_NAME = `timer-version-${CACHE_VERSION}`;
 
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/app.js',
-    '/timer-worker.js',
-    '/icon.png',
-    '/notification.mp3',
-    '/config.js'
+    './',
+    'index.html',
+    'style.css',
+    'app.js',
+    'timer-worker.js',
+    'icon.png',
+    'notification.mp3',
+    'config.js'
 ];
 
 self.addEventListener('install', event => {
@@ -20,13 +20,18 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Service Worker: Caching files');
-                return cache.addAll(urlsToCache);
+                return Promise.all(
+                    urlsToCache.map(url => {
+                        return cache.add(url).catch(error => {
+                            console.error(`Failed to cache ${url}: ${error}`);
+                            // Continue avec les autres fichiers même si celui-ci échoue
+                            return Promise.resolve();
+                        });
+                    })
+                );
             })
             .then(() => {
-                console.log('Service Worker: All files cached');
-            })
-            .catch(error => {
-                console.error('Service Worker: Caching failed:', error);
+                console.log('Service Worker: All available files cached');
             })
     );
 });
