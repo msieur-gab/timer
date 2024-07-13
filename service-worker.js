@@ -15,14 +15,27 @@ const urlsToCache = [
     '/config.js'
 ];
 
-
-
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+            .then(cache => {
+                return Promise.all(
+                    urlsToCache.map(url => {
+                        return cache.add(url).catch(err => {
+                            console.error(`Failed to cache ${url}: ${err}`);
+                        });
+                    })
+                );
+            })
     );
 });
+
+// self.addEventListener('install', event => {
+//     event.waitUntil(
+//         caches.open(CACHE_NAME)
+//             .then(cache => cache.addAll(urlsToCache))
+//     );
+// });
 
 self.addEventListener('fetch', event => {
     event.respondWith(
