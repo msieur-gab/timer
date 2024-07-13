@@ -2,11 +2,14 @@ const CACHE_NAME = 'tea-timer-cache-v1';
 const urlsToCache = [
     '/',
     '/index.html',
-    '/styles.css',
+    '/style.css',
     '/app.js',
     '/timer-worker.js',
-    '/icon.png'
+    '/icon.png',
+    '/notification.mp3'
 ];
+
+
 
 self.addEventListener('install', event => {
     event.waitUntil(
