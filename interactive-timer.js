@@ -6,6 +6,7 @@ class InteractiveTimer {
         this.isOpen = false;
         this.startY = 0;
         this.currentY = 0;
+        this.handleHeight = 50; // Hauteur de la poignée en pixels
 
         this.init();
     }
@@ -15,6 +16,7 @@ class InteractiveTimer {
         this.container.addEventListener('touchstart', (e) => this.touchStart(e));
         this.container.addEventListener('touchmove', (e) => this.touchMove(e));
         this.container.addEventListener('touchend', () => this.touchEnd());
+        this.updateContainerPosition(); // Position initiale
     }
 
     toggleContainer() {
@@ -30,8 +32,8 @@ class InteractiveTimer {
     touchMove(e) {
         this.currentY = e.touches[0].clientY;
         let deltaY = this.currentY - this.startY;
-        let newY = (this.isOpen ? 0 : window.innerHeight - 50) + deltaY;
-        newY = Math.max(50, Math.min(newY, window.innerHeight - 50));
+        let newY = (this.isOpen ? 0 : window.innerHeight - this.handleHeight) + deltaY;
+        newY = Math.max(0, Math.min(newY, window.innerHeight - this.handleHeight));
         this.container.style.transform = `translateY(${newY}px)`;
     }
 
@@ -44,12 +46,11 @@ class InteractiveTimer {
     }
 
     updateContainerPosition() {
-        const y = this.isOpen ? 0 : window.innerHeight - 50;
+        const y = this.isOpen ? 0 : window.innerHeight - this.handleHeight;
         this.container.style.transform = `translateY(${y}px)`;
     }
 }
 
-// Initialiser le timer interactif quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', () => {
     new InteractiveTimer();
 });
