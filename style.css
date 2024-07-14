@@ -30,6 +30,15 @@ body {
     margin: 20px 0;
 }
 
+ input {
+  border: none;
+  display: inline;
+  font-family: inherit;
+  font-size: inherit;
+  padding: none;
+  width: auto;
+}
+
 .scale-dots {
     flex-grow: 1;
     height: 10px;
