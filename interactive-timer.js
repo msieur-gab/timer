@@ -1,6 +1,7 @@
 class InteractiveTimer {
     constructor() {
         this.container = document.getElementById('timer-container');
+        this.handle = document.getElementById('timer-handle');
         this.isOpen = false;
         this.isDragging = false;
         this.startY = 0;
@@ -13,6 +14,7 @@ class InteractiveTimer {
         document.addEventListener('touchmove', this.drag.bind(this), { passive: false });
         document.addEventListener('mouseup', this.endDrag.bind(this));
         document.addEventListener('touchend', this.endDrag.bind(this));
+        this.handle.addEventListener('click', this.handleClick.bind(this));
 
         this.updatePosition();
     }
@@ -34,7 +36,7 @@ class InteractiveTimer {
         e.type === 'touchmove' && e.preventDefault();
     }
 
-    endDrag() {
+    endDrag(e) {
         if (!this.isDragging) return;
         this.isDragging = false;
         this.container.style.transition = 'transform 0.3s ease-out';
@@ -42,11 +44,20 @@ class InteractiveTimer {
         this.updatePosition();
     }
 
+    handleClick(e) {
+        if (!this.isDragging) {
+            this.isOpen = !this.isOpen;
+            this.updatePosition();
+        }
+        e.preventDefault();
+    }
+
     getTransformValue() {
         return parseInt(getComputedStyle(this.container).transform.split(',')[5]) || 0;
     }
 
     updatePosition() {
+        this.container.style.transition = 'transform 0.3s ease-out';
         this.container.style.transform = `translateY(${this.isOpen ? 0 : this.containerHeight - this.handleHeight}px)`;
     }
 }
