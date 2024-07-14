@@ -1,3 +1,5 @@
+import notificationManager from 'notifications.js';
+
 const APP_VERSION = APP_CONFIG.version;
 
 const timerWorker = new Worker('timer-worker.js');
@@ -12,21 +14,6 @@ const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
 const setMinutesInput = document.getElementById('set-minutes');
 const setSecondsInput = document.getElementById('set-seconds');
-
-async function checkNotificationPermission() {
-    if (!('Notification' in window)) {
-        console.log('This browser does not support notifications');
-        return false;
-    }
-    if (Notification.permission === 'granted') {
-        return true;
-    }
-    if (Notification.permission !== 'denied') {
-        const permission = await Notification.requestPermission();
-        return permission === 'granted';
-    }
-    return false;
-}
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -98,7 +85,11 @@ async function timerFinished() {
         }
     }
     playNotificationSound();
-    await showNotification();
+    await notificationManager.showNotification('Tea is ready!', {
+        body: 'Your tea has finished steeping.',
+        icon: 'icon.png',
+        sound: 'notification.mp3'
+    });
     isTimerRunning = false;
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
@@ -106,33 +97,6 @@ async function timerFinished() {
 
 function playNotificationSound() {
     audio.play().catch(error => console.log('Error playing sound:', error));
-}
-
-async function showNotification() {
-    const hasPermission = await checkNotificationPermission();
-    if (hasPermission) {
-        try {
-            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({
-                    type: 'SHOW_NOTIFICATION',
-                    title: 'Tea is ready!',
-                    options: {
-                        body: 'Your tea has finished steeping.',
-                        icon: 'icon.png'
-                    }
-                });
-            } else {
-                new Notification('Tea is ready!', {
-                    body: 'Your tea has finished steeping.',
-                    icon: 'icon.png'
-                });
-            }
-        } catch (err) {
-            console.error('Error showing notification:', err);
-        }
-    } else {
-        console.log('Notification permission not granted');
-    }
 }
 
 function updateButtonStates() {
@@ -152,19 +116,22 @@ function updateVersionDisplay() {
     }
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     updateVersionDisplay();
     updateButtonStates();
     
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
-            .catch(error => console.error('ServiceWorker registration failed: ', error));
+        try {
+            const registration = await navigator.serviceWorker.register('service-worker.js');
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        } catch (error) {
+            console.error('ServiceWorker registration failed: ', error);
+        }
     }
+
+    await notificationManager.init();
 });
 
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
-
-checkNotificationPermission();
