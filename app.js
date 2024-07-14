@@ -1,3 +1,5 @@
+import notificationManager from './notifications.js';
+
 const APP_VERSION = APP_CONFIG.version;
 
 const timerWorker = new Worker('timer-worker.js');
@@ -12,18 +14,6 @@ const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
 const setMinutesInput = document.getElementById('set-minutes');
 const setSecondsInput = document.getElementById('set-seconds');
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(registration => {
-                console.log('Service Worker registered successfully:', registration.scope);
-            })
-            .catch(error => {
-                console.log('Service Worker registration failed:', error);
-            });
-    });
-}
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -85,14 +75,21 @@ function formatTime(seconds) {
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-function timerFinished() {
+async function timerFinished() {
     if (wakeLock) {
-        wakeLock.release().then(() => {
+        try {
+            await wakeLock.release();
             console.log('Wake Lock released');
-        });
+        } catch (err) {
+            console.error(`${err.name}, ${err.message}`);
+        }
     }
     playNotificationSound();
-    showNotification();
+    await notificationManager.showNotification('Tea is ready!', {
+        body: 'Your tea has finished steeping.',
+        icon: 'icon.png',
+        sound: 'notification.mp3'
+    });
     isTimerRunning = false;
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
@@ -100,15 +97,6 @@ function timerFinished() {
 
 function playNotificationSound() {
     audio.play().catch(error => console.log('Error playing sound:', error));
-}
-
-function showNotification() {
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Tea is ready!', {
-            body: 'Your tea has finished steeping.',
-            icon: 'icon.png'
-        });
-    }
 }
 
 function updateButtonStates() {
@@ -128,15 +116,22 @@ function updateVersionDisplay() {
     }
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     updateVersionDisplay();
     updateButtonStates();
+    
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('service-worker.js');
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        } catch (error) {
+            console.error('ServiceWorker registration failed: ', error);
+        }
+    }
+
+    await notificationManager.init();
 });
 
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
-
-if ('Notification' in window && Notification.permission !== 'granted') {
-    Notification.requestPermission();
-}

@@ -8,6 +8,7 @@ const urlsToCache = [
     'index.html',
     'style.css',
     'app.js',
+    'notifications.js',
     'timer-worker.js',
     'icon.png',
     'config.js'
@@ -78,4 +79,12 @@ self.addEventListener('fetch', event => {
                 return fetch(event.request);
             })
     );
+});
+
+self.addEventListener('message', event => {
+    if (event.data.type === 'SHOW_NOTIFICATION') {
+        self.registration.showNotification(event.data.title, event.data.options)
+            .then(() => console.log('Notification shown successfully'))
+            .catch(error => console.error('Error showing notification:', error));
+    }
 });
