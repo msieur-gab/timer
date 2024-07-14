@@ -54,3 +54,29 @@ body {
     font-size: 10px;
     color: #888;
 }
+
+.interactive-timer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 300px; /* Ajustez selon vos besoins */
+    background-color: #fff;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    transform: translateY(calc(100% - 50px));
+    transition: transform 0.3s ease-out;
+}
+
+.timer-handle {
+    height: 50px;
+    background-color: #f0f0f0;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    cursor: pointer;
+}
+
+.timer-content {
+    padding: 20px;
+    height: calc(100% - 50px);
+    overflow-y: auto;
+}
