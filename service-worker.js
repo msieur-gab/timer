@@ -8,6 +8,7 @@ const urlsToCache = [
     'index.html',
     'style.css',
     'app.js',
+    'notifications.js',
     'timer-worker.js',
     'icon.png',
     'config.js'
@@ -80,7 +81,6 @@ self.addEventListener('fetch', event => {
     );
 });
 
-// Ajout de la gestion des notifications
 self.addEventListener('message', event => {
     if (event.data.type === 'SHOW_NOTIFICATION') {
         self.registration.showNotification(event.data.title, event.data.options)
