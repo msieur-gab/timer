@@ -1,4 +1,4 @@
-import notificationManager from 'notifications.js';
+import notificationManager from './notifications.js';
 
 const APP_VERSION = APP_CONFIG.version;
 
