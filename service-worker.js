@@ -79,3 +79,12 @@ self.addEventListener('fetch', event => {
             })
     );
 });
+
+// Ajout de la gestion des notifications
+self.addEventListener('message', event => {
+    if (event.data.type === 'SHOW_NOTIFICATION') {
+        self.registration.showNotification(event.data.title, event.data.options)
+            .then(() => console.log('Notification shown successfully'))
+            .catch(error => console.error('Error showing notification:', error));
+    }
+});
