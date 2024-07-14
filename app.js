@@ -13,16 +13,19 @@ const resetButton = document.getElementById('reset-button');
 const setMinutesInput = document.getElementById('set-minutes');
 const setSecondsInput = document.getElementById('set-seconds');
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-            .then(registration => {
-                console.log('Service Worker registered successfully:', registration.scope);
-            })
-            .catch(error => {
-                console.log('Service Worker registration failed:', error);
-            });
-    });
+async function checkNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('This browser does not support notifications');
+        return false;
+    }
+    if (Notification.permission === 'granted') {
+        return true;
+    }
+    if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+    return false;
 }
 
 async function startPauseTimer() {
@@ -85,14 +88,17 @@ function formatTime(seconds) {
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-function timerFinished() {
+async function timerFinished() {
     if (wakeLock) {
-        wakeLock.release().then(() => {
+        try {
+            await wakeLock.release();
             console.log('Wake Lock released');
-        });
+        } catch (err) {
+            console.error(`${err.name}, ${err.message}`);
+        }
     }
     playNotificationSound();
-    showNotification();
+    await showNotification();
     isTimerRunning = false;
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
@@ -102,12 +108,30 @@ function playNotificationSound() {
     audio.play().catch(error => console.log('Error playing sound:', error));
 }
 
-function showNotification() {
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Tea is ready!', {
-            body: 'Your tea has finished steeping.',
-            icon: 'icon.png'
-        });
+async function showNotification() {
+    const hasPermission = await checkNotificationPermission();
+    if (hasPermission) {
+        try {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'SHOW_NOTIFICATION',
+                    title: 'Tea is ready!',
+                    options: {
+                        body: 'Your tea has finished steeping.',
+                        icon: 'icon.png'
+                    }
+                });
+            } else {
+                new Notification('Tea is ready!', {
+                    body: 'Your tea has finished steeping.',
+                    icon: 'icon.png'
+                });
+            }
+        } catch (err) {
+            console.error('Error showing notification:', err);
+        }
+    } else {
+        console.log('Notification permission not granted');
     }
 }
 
@@ -131,12 +155,16 @@ function updateVersionDisplay() {
 window.addEventListener('load', () => {
     updateVersionDisplay();
     updateButtonStates();
+    
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+            .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+            .catch(error => console.error('ServiceWorker registration failed: ', error));
+    }
 });
 
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
 
-if ('Notification' in window && Notification.permission !== 'granted') {
-    Notification.requestPermission();
-}
+checkNotificationPermission();
