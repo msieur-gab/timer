@@ -30,11 +30,11 @@ class InteractiveTimer {
         this.container.style.transition = 'none';
     }
 
-    touchMove(e) {
+     touchMove(e) {
         this.currentY = e.touches[0].clientY;
         let deltaY = this.currentY - this.startY;
-        let newY = (this.isOpen ? 0 : window.innerHeight - this.handleHeight) + deltaY;
-        newY = Math.max(0, Math.min(newY, window.innerHeight - this.handleHeight));
+        let newY = (this.isOpen ? 0 : this.containerHeight - this.handleHeight) + deltaY;
+        newY = Math.max(0, Math.min(newY, this.containerHeight - this.handleHeight));
         this.container.style.transform = `translateY(${newY}px)`;
     }
 
