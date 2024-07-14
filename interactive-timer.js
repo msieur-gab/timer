@@ -6,6 +6,7 @@ class InteractiveTimer {
         this.isOpen = false;
         this.startY = 0;
         this.currentY = 0;
+        this.containerHeight = 300; // Hauteur totale du conteneur en pixels
         this.handleHeight = 50; // Hauteur de la poignée en pixels
 
         this.init();
