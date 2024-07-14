@@ -2,58 +2,55 @@ class InteractiveTimer {
     constructor() {
         this.container = document.getElementById('timer-container');
         this.handle = document.getElementById('timer-handle');
-        this.content = document.getElementById('timer-content');
         this.isOpen = false;
+        this.isDragging = false;
         this.startY = 0;
-        this.currentY = 0;
-        this.containerHeight = 300; // Hauteur totale du conteneur en pixels
-        this.handleHeight = 50; // Hauteur de la poignée en pixels
+        this.containerHeight = 300;
+        this.handleHeight = 50;
 
-        this.init();
+        this.handle.addEventListener('mousedown', this.startDrag.bind(this));
+        this.handle.addEventListener('touchstart', this.startDrag.bind(this), { passive: false });
+        document.addEventListener('mousemove', this.drag.bind(this));
+        document.addEventListener('touchmove', this.drag.bind(this), { passive: false });
+        document.addEventListener('mouseup', this.endDrag.bind(this));
+        document.addEventListener('touchend', this.endDrag.bind(this));
+        this.handle.addEventListener('click', this.handleClick.bind(this));
+
+        this.updatePosition();
     }
 
-    init() {
-        this.handle.addEventListener('click', () => this.toggleContainer());
-        this.container.addEventListener('touchstart', (e) => this.touchStart(e));
-        this.container.addEventListener('touchmove', (e) => this.touchMove(e));
-        this.container.addEventListener('touchend', () => this.touchEnd());
-        this.updateContainerPosition(); // Position initiale
-    }
-
-    toggleContainer() {
-        this.isOpen = !this.isOpen;
-        this.updateContainerPosition();
-    }
-
-    touchStart(e) {
-        e.preventDefault();
-        this.startY = e.touches[0].clientY;
+    startDrag(e) {
+        this.isDragging = true;
+        this.startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
         this.container.style.transition = 'none';
+        e.type === 'touchstart' && e.preventDefault();
     }
 
-     touchMove(e) {
-         e.preventDefault();
-         this.currentY = e.touches[0].clientY;
-         let deltaY = this.currentY - this.startY;
-         let newY = (this.isOpen ? 0 : this.containerHeight - this.handleHeight) + deltaY;
-         newY = Math.max(0, Math.min(newY, this.containerHeight - this.handleHeight));
-         this.container.style.transform = `translateY(${newY}px)`;
+    drag(e) {
+        if (!this.isDragging) return;
+        const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+        let newY = Math.max(0, Math.min((this.isOpen ? 0 : this.containerHeight - this.handleHeight) + currentY - this.startY, this.containerHeight - this.handleHeight));
+        this.container.style.transform = `translateY(${newY}px)`;
+        e.type === 'touchmove' && e.preventDefault();
     }
 
-    touchEnd() {
+    endDrag() {
+        if (!this.isDragging) return;
+        this.isDragging = false;
         this.container.style.transition = 'transform 0.3s ease-out';
-        if (Math.abs(this.currentY - this.startY) > 50) {
-            this.isOpen = this.currentY < this.startY;
-        }
-        this.updateContainerPosition();
+        this.isOpen = parseInt(this.container.style.transform.replace('translateY(', '')) < (this.containerHeight - this.handleHeight) / 2;
+        this.updatePosition();
     }
 
-    updateContainerPosition() {
-        const y = this.isOpen ? 0 : this.containerHeight - this.handleHeight;
-        this.container.style.transform = `translateY(${y}px)`;
+    handleClick(e) {
+        if (!this.isDragging) this.isOpen = !this.isOpen;
+        this.updatePosition();
+        e.preventDefault();
+    }
+
+    updatePosition() {
+        this.container.style.transform = `translateY(${this.isOpen ? 0 : this.containerHeight - this.handleHeight}px)`;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    new InteractiveTimer();
-});
+document.addEventListener('DOMContentLoaded', () => new InteractiveTimer());
