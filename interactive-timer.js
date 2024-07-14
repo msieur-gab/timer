@@ -47,7 +47,7 @@ class InteractiveTimer {
     }
 
     updateContainerPosition() {
-        const y = this.isOpen ? 0 : window.innerHeight - this.handleHeight;
+        const y = this.isOpen ? 0 : this.containerHeight - this.handleHeight;
         this.container.style.transform = `translateY(${y}px)`;
     }
 }
