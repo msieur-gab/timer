@@ -12,8 +12,8 @@ const timeLeftDisplay = document.getElementById('time-left');
 const startPauseButton = document.getElementById('start-pause-button');
 const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
-const setMinutesInput = document.getElementById('set-minutes');
-const setSecondsInput = document.getElementById('set-seconds');
+const minutesInput = document.getElementById('minutes');
+const secondsInput = document.getElementById('seconds');
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -24,8 +24,8 @@ async function startPauseTimer() {
 }
 
 async function startTimer() {
-    const minutes = parseInt(setMinutesInput.value);
-    const seconds = parseInt(setSecondsInput.value);
+    const minutes = parseInt(minutesInput.value);
+    const seconds = parseInt(secondsInput.value);
     initialDuration = minutes * 60 + seconds;
 
     if (initialDuration <= 0) return;
@@ -53,6 +53,8 @@ function addTenSeconds() {
 function resetTimer() {
     timerWorker.postMessage({ command: 'reset', duration: initialDuration });
     isTimerRunning = false;
+    minutesInput.value = String(Math.floor(initialDuration / 60)).padStart(2, '0');
+    secondsInput.value = String(initialDuration % 60).padStart(2, '0');
     updateTimerDisplay(initialDuration);
     updateButtonStates();
 }
@@ -103,8 +105,8 @@ function updateButtonStates() {
     startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
     addTenSecondsButton.disabled = !isTimerRunning;
     resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
-    setMinutesInput.disabled = isTimerRunning;
-    setSecondsInput.disabled = isTimerRunning;
+    minutesInput.disabled = isTimerRunning;
+    secondsInput.disabled = isTimerRunning;
 }
 
 function updateVersionDisplay() {
@@ -114,6 +116,25 @@ function updateVersionDisplay() {
     } else {
         console.warn("Element 'version-info' not found in the DOM");
     }
+}
+
+function validateTimeInput(input) {
+    let value = parseInt(input.value);
+    const max = input.id === 'minutes' ? 59 : 59;
+    if (isNaN(value) || value < 0) {
+        value = 0;
+    } else if (value > max) {
+        value = max;
+    }
+    input.value = value.toString().padStart(2, '0');
+    updateTimeLeftDisplay();
+}
+
+function updateTimeLeftDisplay() {
+    const minutes = parseInt(minutesInput.value) || 0;
+    const seconds = parseInt(secondsInput.value) || 0;
+    const totalSeconds = minutes * 60 + seconds;
+    timeLeftDisplay.textContent = formatTime(totalSeconds);
 }
 
 window.addEventListener('load', async () => {
@@ -135,3 +156,7 @@ window.addEventListener('load', async () => {
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
+minutesInput.addEventListener('change', () => validateTimeInput(minutesInput));
+secondsInput.addEventListener('change', () => validateTimeInput(secondsInput));
+minutesInput.addEventListener('input', updateTimeLeftDisplay);
+secondsInput.addEventListener('input', updateTimeLeftDisplay);
