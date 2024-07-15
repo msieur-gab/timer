@@ -3,7 +3,6 @@
   "short_name": "TeaTimer",
   "start_url": "index.html",
   "scope": "https://msieur-gab.github.io/timer/",
-  "display_override": ["window-control-overlay", "minimal-ui"],
   "display": "standalone",
   "background_color": "#f0f5f0",
   "theme_color": "#f0f5f0",
