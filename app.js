@@ -1,3 +1,4 @@
+const APP_CONFIG = window.APP_CONFIG;
 import notificationManager from './notifications.js';
 
 const APP_VERSION = APP_CONFIG.version;
@@ -7,8 +8,8 @@ let wakeLock = null;
 const audio = new Audio('notification.mp3');
 let isTimerRunning = false;
 let initialDuration = 0;
-let isEditing = false;
 let lastEditedDuration = 0;
+let isEditing = false;
 
 const timeLeftDisplay = document.getElementById('time-left');
 const startPauseButton = document.getElementById('start-pause-button');
@@ -38,7 +39,6 @@ async function startTimer() {
     
     if (initialDuration <= 0) return;
 
-    // Sauvegarder la dernière durée éditée
     lastEditedDuration = initialDuration;
 
     try {
@@ -61,7 +61,8 @@ function addTenSeconds() {
     timerWorker.postMessage({ command: 'addTime', seconds: 10 });
 }
 
-function resetTimer() {
+async function resetTimer() {
+    await releaseWakeLock();
     timerWorker.postMessage({ command: 'reset', duration: initialDuration });
     isTimerRunning = false;
     updateTimerDisplay(initialDuration);
@@ -93,14 +94,7 @@ function formatTime(seconds) {
 }
 
 async function timerFinished() {
-    if (wakeLock) {
-        try {
-            await wakeLock.release();
-            console.log('Wake Lock released');
-        } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
-        }
-    }
+    await releaseWakeLock();
     playNotificationSound();
     await notificationManager.showNotification('Tea is ready!', {
         body: 'Your tea has finished steeping.',
@@ -110,8 +104,6 @@ async function timerFinished() {
     isTimerRunning = false;
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
-    
-    // Afficher la dernière durée éditée
     updateTimerDisplay(lastEditedDuration);
 }
 
@@ -176,6 +168,18 @@ function updateTimeLeftDisplay() {
     }
 }
 
+async function releaseWakeLock() {
+    if (wakeLock) {
+        try {
+            await wakeLock.release();
+            wakeLock = null;
+            console.log('Wake Lock released');
+        } catch (err) {
+            console.error(`${err.name}, ${err.message}`);
+        }
+    }
+}
+
 function handleTouchStart(e) {
     if (isEditing) return;
     startY = e.touches[0].clientY;
@@ -234,6 +238,12 @@ window.addEventListener('load', async () => {
     }
 
     await notificationManager.init();
+});
+
+document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'hidden') {
+        await releaseWakeLock();
+    }
 });
 
 startPauseButton.addEventListener('click', startPauseTimer);
