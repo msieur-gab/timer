@@ -1,5 +1,3 @@
-const APP_CONFIG = {
-    version: 'v0.0.5'
+export const APP_CONFIG = {
+    version: 'v0.0.6' 
 };
-
-self.APP_CONFIG = APP_CONFIG;
