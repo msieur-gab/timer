@@ -57,10 +57,6 @@ function pauseTimer() {
     updateButtonStates();
 }
 
-// function addTenSeconds() {
-//     timerWorker.postMessage({ command: 'addTime', seconds: 10 });
-// }
-
 function addTenSeconds() {
     if (isTimerRunning) {
         timerWorker.postMessage({ command: 'addTime', seconds: 10 });
@@ -71,7 +67,6 @@ function addTenSeconds() {
         lastEditedDuration = newTime;
     }
 }
-
 
 async function resetTimer() {
     await releaseWakeLock();
@@ -108,11 +103,14 @@ function formatTime(seconds) {
 async function timerFinished() {
     await releaseWakeLock();
     playNotificationSound();
-    await notificationManager.showNotification('Tea is ready!', {
-        body: 'Your tea has finished steeping.',
-        icon: 'icon.png',
-        sound: 'notification.mp3'
-    });
+    try {
+        await notificationManager.showNotification('Tea is ready!', {
+            body: 'Your tea has finished steeping.',
+            icon: 'icon.png'
+        });
+    } catch (error) {
+        console.error('Error showing notification:', error);
+    }
     isTimerRunning = false;
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
@@ -125,7 +123,6 @@ function playNotificationSound() {
 
 function updateButtonStates() {
     if (startPauseButton) startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
-    // if (addTenSecondsButton) addTenSecondsButton.disabled = !isTimerRunning;
     if (resetButton && timeLeftDisplay) {
         resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
     }
@@ -159,17 +156,6 @@ function toggleEditMode(input) {
     }
 }
 
-// function validateTimeInput(input) {
-//     let value = parseInt(input.value);
-//     const max = 59;
-//     if (isNaN(value) || value < 0) {
-//         value = 0;
-//     } else if (value > max) {
-//         value = max;
-//     }
-//     input.value = value.toString().padStart(2, '0');
-// }
-
 function validateTimeInput(input) {
     let value = parseInt(input.value);
     const max = 59;
@@ -190,12 +176,10 @@ function setupInputListeners(input) {
         updateTimeLeftDisplay();
     });
     input.addEventListener('input', (e) => {
-        // Empêcher les valeurs non numériques
         e.target.value = e.target.value.replace(/[^0-9]/g, '');
     });
 }
 
-// end of addition
 function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
@@ -262,6 +246,21 @@ function toggleTimerContainer(e) {
     e.stopPropagation();
 }
 
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.log('Ce navigateur ne supporte pas les notifications de bureau');
+        return false;
+    }
+
+    let permission = Notification.permission;
+
+    if (permission === 'default') {
+        permission = await Notification.requestPermission();
+    }
+
+    return permission === 'granted';
+}
+
 window.addEventListener('load', async () => {
     updateVersionDisplay();
     updateButtonStates();
@@ -276,6 +275,8 @@ window.addEventListener('load', async () => {
     }
 
     await notificationManager.init();
+    const notificationPermission = await requestNotificationPermission();
+    console.log('Notification permission:', notificationPermission);
 });
 
 document.addEventListener('visibilitychange', async () => {
@@ -287,19 +288,6 @@ document.addEventListener('visibilitychange', async () => {
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
-
-// function setupInputListeners(input) {
-//     input.addEventListener('click', (e) => {
-//         e.stopPropagation();
-//         toggleEditMode(input);
-//     });
-//     input.addEventListener('blur', () => {
-//         if (isEditing) toggleEditMode(input);
-//     });
-//     input.addEventListener('keyup', (e) => {
-//         if (e.key === 'Enter') toggleEditMode(input);
-//     });
-// }
 
 setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
