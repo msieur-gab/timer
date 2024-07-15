@@ -12,7 +12,6 @@ body {
 }
 
 #timer-display {
-    font-size: 48px;
     text-align: center;
     margin: 20px 0;
 }
@@ -100,24 +99,26 @@ body {
 }
 
 #time_input input {
-    width: 60px;
+    width: 70px;
+    height: 70px;
     border: none;
     background: transparent;
     font-size: inherit;
     text-align: center;
     color: inherit;
     cursor: pointer;
+    padding: 0;
+    margin: 0 5px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
 }
 
 #time_input input:focus {
     outline: none;
-    border-bottom: 2px solid #4CAF50;
 }
 
 #time_input input.editing {
-    border: 2px solid #4CAF50;
-    border-radius: 8px;
-    background-color: white;
+    background-color: rgba(0, 0, 0, 0.05);
 }
 
 #time_input span {
@@ -135,9 +136,13 @@ input::-webkit-inner-spin-button {
 }
 
 @media (max-width: 480px) {
+    #time_input {
+        font-size: 36px;
+    }
+
     #time_input input {
-        width: 50px;
-        font-size: 1.2rem;
+        width: 60px;
+        height: 60px;
     }
 
     #timer-controls button {
