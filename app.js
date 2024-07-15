@@ -9,7 +9,6 @@ let isTimerRunning = false;
 let initialDuration = 0;
 let isEditing = false;
 
-const timeLeftDisplay = document.getElementById('time-left');
 const startPauseButton = document.getElementById('start-pause-button');
 const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
@@ -116,7 +115,7 @@ function updateVersionDisplay() {
     }
 }
 
-function toggleEditMode() {
+function toggleEditMode(input) {
     isEditing = !isEditing;
     minutesInput.readOnly = !isEditing;
     secondsInput.readOnly = !isEditing;
@@ -124,7 +123,8 @@ function toggleEditMode() {
     secondsInput.classList.toggle('editing', isEditing);
     
     if (isEditing) {
-        minutesInput.focus();
+        input.focus();
+        input.select();  // Sélectionne tout le texte dans le champ
     } else {
         validateTimeInput(minutesInput);
         validateTimeInput(secondsInput);
@@ -168,17 +168,16 @@ window.addEventListener('load', async () => {
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
-minutesInput.addEventListener('click', toggleEditMode);
-secondsInput.addEventListener('click', toggleEditMode);
-minutesInput.addEventListener('blur', () => {
-    if (isEditing) toggleEditMode();
-});
-secondsInput.addEventListener('blur', () => {
-    if (isEditing) toggleEditMode();
-});
-minutesInput.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') toggleEditMode();
-});
-secondsInput.addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') toggleEditMode();
-});
+
+function setupInputListeners(input) {
+    input.addEventListener('click', () => toggleEditMode(input));
+    input.addEventListener('blur', () => {
+        if (isEditing) toggleEditMode(input);
+    });
+    input.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') toggleEditMode(input);
+    });
+}
+
+setupInputListeners(minutesInput);
+setupInputListeners(secondsInput);
