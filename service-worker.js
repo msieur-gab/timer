@@ -19,6 +19,7 @@ const audioToCache = 'notification.mp3';
 
 self.addEventListener('install', event => {
     console.log('Service Worker: Installing...');
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
