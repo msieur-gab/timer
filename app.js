@@ -2,6 +2,7 @@ const APP_CONFIG = window.APP_CONFIG;
 import notificationManager from './notifications.js';
 
 const APP_VERSION = APP_CONFIG.version;
+const DEBUG = true; // Set this to false in production
 
 const timerWorker = new Worker('timer-worker.js');
 let wakeLock = null;
@@ -23,6 +24,12 @@ const timerContent = document.querySelector('.timer-content');
 
 let startY, currentHeight, isDragging = false;
 const SWIPE_THRESHOLD = 30;
+
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log(...args);
+    }
+}
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -47,7 +54,7 @@ async function startTimer() {
         isTimerRunning = true;
         updateButtonStates();
     } catch (err) {
-        console.error(`${err.name}, ${err.message}`);
+        debugLog(`Error: ${err.name}, ${err.message}`);
     }
 }
 
@@ -104,12 +111,20 @@ async function timerFinished() {
     await releaseWakeLock();
     playNotificationSound();
     try {
-        await notificationManager.showNotification('Tea is ready!', {
-            body: 'Your tea has finished steeping.',
-            icon: 'icon.png'
-        });
+        debugLog('Attempting to show notification');
+        const permission = await requestNotificationPermission();
+        debugLog('Current permission:', permission);
+        if (permission) {
+            await notificationManager.showNotification('Tea is ready!', {
+                body: 'Your tea has finished steeping.',
+                icon: 'icon.png'
+            });
+            debugLog('Notification sent successfully');
+        } else {
+            debugLog('Notification permission not granted');
+        }
     } catch (error) {
-        console.error('Error showing notification:', error);
+        debugLog('Error showing notification:', error);
     }
     isTimerRunning = false;
     updateButtonStates();
@@ -118,7 +133,7 @@ async function timerFinished() {
 }
 
 function playNotificationSound() {
-    audio.play().catch(error => console.log('Error playing sound:', error));
+    audio.play().catch(error => debugLog('Error playing sound:', error));
 }
 
 function updateButtonStates() {
@@ -135,7 +150,7 @@ function updateVersionDisplay() {
     if (versionElement) {
         versionElement.textContent = APP_VERSION;
     } else {
-        console.warn("Element 'version-info' not found in the DOM");
+        debugLog("Element 'version-info' not found in the DOM");
     }
 }
 
@@ -195,9 +210,9 @@ async function releaseWakeLock() {
         try {
             await wakeLock.release();
             wakeLock = null;
-            console.log('Wake Lock released');
+            debugLog('Wake Lock released');
         } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
+            debugLog(`Error releasing wake lock: ${err.name}, ${err.message}`);
         }
     }
 }
@@ -248,17 +263,30 @@ function toggleTimerContainer(e) {
 
 async function requestNotificationPermission() {
     if (!('Notification' in window)) {
-        console.log('Ce navigateur ne supporte pas les notifications de bureau');
+        debugLog('This browser does not support desktop notification');
         return false;
     }
 
-    let permission = Notification.permission;
+    debugLog('Initial notification permission state:', Notification.permission);
 
-    if (permission === 'default') {
-        permission = await Notification.requestPermission();
+    if (Notification.permission === 'granted') {
+        debugLog('Permission already granted');
+        return true;
     }
 
-    return permission === 'granted';
+    if (Notification.permission !== 'denied') {
+        try {
+            const permission = await Notification.requestPermission();
+            debugLog('New permission:', permission);
+            return permission === 'granted';
+        } catch (error) {
+            debugLog('Error requesting notification permission:', error);
+            return false;
+        }
+    }
+
+    debugLog('Permission denied previously');
+    return false;
 }
 
 window.addEventListener('load', async () => {
@@ -268,15 +296,23 @@ window.addEventListener('load', async () => {
     if ('serviceWorker' in navigator) {
         try {
             const registration = await navigator.serviceWorker.register('service-worker.js');
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            debugLog('ServiceWorker registration successful with scope: ', registration.scope);
+            
+            if (navigator.serviceWorker.controller) {
+                debugLog('Service Worker controller is active');
+            } else {
+                debugLog('Service Worker controller is not active yet');
+            }
         } catch (error) {
-            console.error('ServiceWorker registration failed: ', error);
+            debugLog('ServiceWorker registration failed: ', error);
         }
+    } else {
+        debugLog('ServiceWorker is not supported');
     }
 
     await notificationManager.init();
     const notificationPermission = await requestNotificationPermission();
-    console.log('Notification permission:', notificationPermission);
+    debugLog('Notification permission:', notificationPermission);
 });
 
 document.addEventListener('visibilitychange', async () => {
