@@ -159,6 +159,17 @@ function toggleEditMode(input) {
     }
 }
 
+// function validateTimeInput(input) {
+//     let value = parseInt(input.value);
+//     const max = 59;
+//     if (isNaN(value) || value < 0) {
+//         value = 0;
+//     } else if (value > max) {
+//         value = max;
+//     }
+//     input.value = value.toString().padStart(2, '0');
+// }
+
 function validateTimeInput(input) {
     let value = parseInt(input.value);
     const max = 59;
@@ -170,6 +181,21 @@ function validateTimeInput(input) {
     input.value = value.toString().padStart(2, '0');
 }
 
+function setupInputListeners(input) {
+    input.addEventListener('focus', (e) => {
+        e.target.select();
+    });
+    input.addEventListener('blur', () => {
+        validateTimeInput(input);
+        updateTimeLeftDisplay();
+    });
+    input.addEventListener('input', (e) => {
+        // Empêcher les valeurs non numériques
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    });
+}
+
+// end of addition
 function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
@@ -262,18 +288,18 @@ startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
 
-function setupInputListeners(input) {
-    input.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleEditMode(input);
-    });
-    input.addEventListener('blur', () => {
-        if (isEditing) toggleEditMode(input);
-    });
-    input.addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') toggleEditMode(input);
-    });
-}
+// function setupInputListeners(input) {
+//     input.addEventListener('click', (e) => {
+//         e.stopPropagation();
+//         toggleEditMode(input);
+//     });
+//     input.addEventListener('blur', () => {
+//         if (isEditing) toggleEditMode(input);
+//     });
+//     input.addEventListener('keyup', (e) => {
+//         if (e.key === 'Enter') toggleEditMode(input);
+//     });
+// }
 
 setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
