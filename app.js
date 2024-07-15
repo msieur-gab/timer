@@ -22,6 +22,7 @@ const timerContent = document.querySelector('.timer-content');
 let isDragging = false;
 let startY;
 let startHeight;
+let lastTouchY;
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -163,20 +164,26 @@ function updateTimeLeftDisplay() {
     timeLeftDisplay.textContent = formatTime(initialDuration);
 }
 
-// Drawer functionality
 function handleTouchStart(e) {
     if (isEditing) return;
     startY = e.touches[0].clientY;
+    lastTouchY = startY;
     startHeight = parseInt(getComputedStyle(timerContainer).height, 10);
     isDragging = true;
 }
 
 function handleTouchMove(e) {
     if (!isDragging || isEditing) return;
-    const deltaY = e.touches[0].clientY - startY;
-    const newHeight = Math.max(50, Math.min(300, startHeight + deltaY));
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - lastTouchY;
+    lastTouchY = currentY;
+    
+    const newHeight = Math.max(50, Math.min(300, parseInt(getComputedStyle(timerContainer).height, 10) - deltaY));
     timerContainer.style.height = `${newHeight}px`;
-    e.preventDefault(); // Prevent default pull-to-refresh behavior
+    
+    if (Math.abs(currentY - startY) > 5) {
+        e.preventDefault(); // Prevent default pull-to-refresh behavior
+    }
 }
 
 function handleTouchEnd() {
@@ -233,7 +240,7 @@ setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
 
 // Drawer event listeners
-timerHandle.addEventListener('touchstart', handleTouchStart);
+timerContainer.addEventListener('touchstart', handleTouchStart);
 timerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
 timerContainer.addEventListener('touchend', handleTouchEnd);
 timerHandle.addEventListener('click', toggleTimerContainer);
