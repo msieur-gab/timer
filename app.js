@@ -7,6 +7,7 @@ let wakeLock = null;
 const audio = new Audio('notification.mp3');
 let isTimerRunning = false;
 let initialDuration = 0;
+let isEditing = false;
 
 const timeLeftDisplay = document.getElementById('time-left');
 const startPauseButton = document.getElementById('start-pause-button');
@@ -24,10 +25,6 @@ async function startPauseTimer() {
 }
 
 async function startTimer() {
-    const minutes = parseInt(minutesInput.value);
-    const seconds = parseInt(secondsInput.value);
-    initialDuration = minutes * 60 + seconds;
-
     if (initialDuration <= 0) return;
 
     try {
@@ -53,8 +50,6 @@ function addTenSeconds() {
 function resetTimer() {
     timerWorker.postMessage({ command: 'reset', duration: initialDuration });
     isTimerRunning = false;
-    minutesInput.value = String(Math.floor(initialDuration / 60)).padStart(2, '0');
-    secondsInput.value = String(initialDuration % 60).padStart(2, '0');
     updateTimerDisplay(initialDuration);
     updateButtonStates();
 }
@@ -68,7 +63,10 @@ timerWorker.onmessage = function(e) {
 };
 
 function updateTimerDisplay(timeLeft) {
-    timeLeftDisplay.textContent = formatTime(timeLeft);
+    if (!isEditing) {
+        minutesInput.value = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        secondsInput.value = String(timeLeft % 60).padStart(2, '0');
+    }
 }
 
 function formatTime(seconds) {
@@ -104,7 +102,7 @@ function playNotificationSound() {
 function updateButtonStates() {
     startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
     addTenSecondsButton.disabled = !isTimerRunning;
-    resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
+    resetButton.disabled = !isTimerRunning && formatTime(initialDuration) === `${minutesInput.value}:${secondsInput.value}`;
     minutesInput.disabled = isTimerRunning;
     secondsInput.disabled = isTimerRunning;
 }
@@ -118,23 +116,37 @@ function updateVersionDisplay() {
     }
 }
 
+function toggleEditMode() {
+    isEditing = !isEditing;
+    minutesInput.readOnly = !isEditing;
+    secondsInput.readOnly = !isEditing;
+    minutesInput.classList.toggle('editing', isEditing);
+    secondsInput.classList.toggle('editing', isEditing);
+    
+    if (isEditing) {
+        minutesInput.focus();
+    } else {
+        validateTimeInput(minutesInput);
+        validateTimeInput(secondsInput);
+        updateTimeLeftDisplay();
+    }
+}
+
 function validateTimeInput(input) {
     let value = parseInt(input.value);
-    const max = input.id === 'minutes' ? 59 : 59;
+    const max = 59;
     if (isNaN(value) || value < 0) {
         value = 0;
     } else if (value > max) {
         value = max;
     }
     input.value = value.toString().padStart(2, '0');
-    updateTimeLeftDisplay();
 }
 
 function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
-    const totalSeconds = minutes * 60 + seconds;
-    timeLeftDisplay.textContent = formatTime(totalSeconds);
+    initialDuration = minutes * 60 + seconds;
 }
 
 window.addEventListener('load', async () => {
@@ -156,7 +168,17 @@ window.addEventListener('load', async () => {
 startPauseButton.addEventListener('click', startPauseTimer);
 addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
-minutesInput.addEventListener('change', () => validateTimeInput(minutesInput));
-secondsInput.addEventListener('change', () => validateTimeInput(secondsInput));
-minutesInput.addEventListener('input', updateTimeLeftDisplay);
-secondsInput.addEventListener('input', updateTimeLeftDisplay);
+minutesInput.addEventListener('click', toggleEditMode);
+secondsInput.addEventListener('click', toggleEditMode);
+minutesInput.addEventListener('blur', () => {
+    if (isEditing) toggleEditMode();
+});
+secondsInput.addEventListener('blur', () => {
+    if (isEditing) toggleEditMode();
+});
+minutesInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') toggleEditMode();
+});
+secondsInput.addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') toggleEditMode();
+});
