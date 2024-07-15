@@ -9,6 +9,7 @@ let isTimerRunning = false;
 let initialDuration = 0;
 let isEditing = false;
 
+const timeLeftDisplay = document.getElementById('time-left');
 const startPauseButton = document.getElementById('start-pause-button');
 const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
@@ -16,6 +17,7 @@ const minutesInput = document.getElementById('minutes');
 const secondsInput = document.getElementById('seconds');
 const timerContainer = document.querySelector('.interactive-timer');
 const timerHandle = document.querySelector('.timer-handle');
+const timerContent = document.querySelector('.timer-content');
 
 let isDragging = false;
 let startY;
@@ -30,6 +32,10 @@ async function startPauseTimer() {
 }
 
 async function startTimer() {
+    const minutes = parseInt(minutesInput.value);
+    const seconds = parseInt(secondsInput.value);
+    initialDuration = minutes * 60 + seconds;
+
     if (initialDuration <= 0) return;
 
     try {
@@ -72,6 +78,7 @@ function updateTimerDisplay(timeLeft) {
         minutesInput.value = String(Math.floor(timeLeft / 60)).padStart(2, '0');
         secondsInput.value = String(timeLeft % 60).padStart(2, '0');
     }
+    timeLeftDisplay.textContent = formatTime(timeLeft);
 }
 
 function formatTime(seconds) {
@@ -107,7 +114,7 @@ function playNotificationSound() {
 function updateButtonStates() {
     startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
     addTenSecondsButton.disabled = !isTimerRunning;
-    resetButton.disabled = !isTimerRunning && formatTime(initialDuration) === `${minutesInput.value}:${secondsInput.value}`;
+    resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
     minutesInput.disabled = isTimerRunning;
     secondsInput.disabled = isTimerRunning;
 }
@@ -153,24 +160,27 @@ function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
     initialDuration = minutes * 60 + seconds;
+    timeLeftDisplay.textContent = formatTime(initialDuration);
 }
 
-// Timer container interactions
+// Drawer functionality
 function handleTouchStart(e) {
+    if (isEditing) return;
     startY = e.touches[0].clientY;
     startHeight = parseInt(getComputedStyle(timerContainer).height, 10);
     isDragging = true;
 }
 
 function handleTouchMove(e) {
-    if (!isDragging) return;
+    if (!isDragging || isEditing) return;
     const deltaY = e.touches[0].clientY - startY;
-    const newHeight = Math.max(50, Math.min(300, startHeight - deltaY));
+    const newHeight = Math.max(50, Math.min(300, startHeight + deltaY));
     timerContainer.style.height = `${newHeight}px`;
+    e.preventDefault(); // Prevent default pull-to-refresh behavior
 }
 
 function handleTouchEnd() {
-    if (!isDragging) return;
+    if (!isDragging || isEditing) return;
     isDragging = false;
     const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
     if (currentHeight < 150) {
@@ -181,6 +191,7 @@ function handleTouchEnd() {
 }
 
 function toggleTimerContainer() {
+    if (isEditing) return;
     const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
     timerContainer.style.height = currentHeight === 300 ? '50px' : '300px';
 }
@@ -206,7 +217,10 @@ addTenSecondsButton.addEventListener('click', addTenSeconds);
 resetButton.addEventListener('click', resetTimer);
 
 function setupInputListeners(input) {
-    input.addEventListener('click', () => toggleEditMode(input));
+    input.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleEditMode(input);
+    });
     input.addEventListener('blur', () => {
         if (isEditing) toggleEditMode(input);
     });
@@ -218,8 +232,11 @@ function setupInputListeners(input) {
 setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
 
-// Timer container event listeners
+// Drawer event listeners
 timerHandle.addEventListener('touchstart', handleTouchStart);
-timerHandle.addEventListener('touchmove', handleTouchMove);
-timerHandle.addEventListener('touchend', handleTouchEnd);
+timerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+timerContainer.addEventListener('touchend', handleTouchEnd);
 timerHandle.addEventListener('click', toggleTimerContainer);
+
+// Prevent drawer from closing when interacting with content
+timerContent.addEventListener('click', (e) => e.stopPropagation());
