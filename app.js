@@ -2,7 +2,7 @@ const APP_CONFIG = window.APP_CONFIG;
 import notificationManager from './notifications.js';
 
 const APP_VERSION = APP_CONFIG.version;
-const DEBUG = true; // Set this to false in production
+const DEBUG = false; // Set this to false in production
 
 const timerWorker = new Worker('timer-worker.js');
 let wakeLockRequest = null;
