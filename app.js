@@ -8,6 +8,7 @@ const audio = new Audio('notification.mp3');
 let isTimerRunning = false;
 let initialDuration = 0;
 let isEditing = false;
+let lastEditedDuration = 0;
 
 const timeLeftDisplay = document.getElementById('time-left');
 const startPauseButton = document.getElementById('start-pause-button');
@@ -34,8 +35,11 @@ async function startTimer() {
     const minutes = parseInt(minutesInput.value);
     const seconds = parseInt(secondsInput.value);
     initialDuration = minutes * 60 + seconds;
-
+    
     if (initialDuration <= 0) return;
+
+    // Sauvegarder la dernière durée éditée
+    lastEditedDuration = initialDuration;
 
     try {
         wakeLock = await navigator.wakeLock.request('screen');
@@ -106,6 +110,9 @@ async function timerFinished() {
     isTimerRunning = false;
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
+    
+    // Afficher la dernière durée éditée
+    updateTimerDisplay(lastEditedDuration);
 }
 
 function playNotificationSound() {
@@ -162,7 +169,8 @@ function validateTimeInput(input) {
 function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
-    initialDuration = minutes * 60 + seconds;
+    lastEditedDuration = minutes * 60 + seconds;
+    initialDuration = lastEditedDuration;
     if (timeLeftDisplay) {
         timeLeftDisplay.textContent = formatTime(initialDuration);
     }
