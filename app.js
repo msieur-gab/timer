@@ -1,6 +1,6 @@
+import { APP_CONFIG } from './config.js';
 import notificationManager from './notifications.js';
 
-import { APP_CONFIG } from './config.js';
 const APP_VERSION = APP_CONFIG.version;
 
 const timerWorker = new Worker('timer-worker.js');
@@ -20,10 +20,8 @@ const timerContainer = document.querySelector('.interactive-timer');
 const timerHandle = document.querySelector('.timer-handle');
 const timerContent = document.querySelector('.timer-content');
 
-let isDragging = false;
-let startY;
-let startHeight;
-let lastTouchY;
+let startY, currentHeight, isDragging = false;
+const SWIPE_THRESHOLD = 30;
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -80,7 +78,9 @@ function updateTimerDisplay(timeLeft) {
         minutesInput.value = String(Math.floor(timeLeft / 60)).padStart(2, '0');
         secondsInput.value = String(timeLeft % 60).padStart(2, '0');
     }
-    timeLeftDisplay.textContent = formatTime(timeLeft);
+    if (timeLeftDisplay) {
+        timeLeftDisplay.textContent = formatTime(timeLeft);
+    }
 }
 
 function formatTime(seconds) {
@@ -164,42 +164,53 @@ function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
     initialDuration = minutes * 60 + seconds;
-    timeLeftDisplay.textContent = formatTime(initialDuration);
+    if (timeLeftDisplay) {
+        timeLeftDisplay.textContent = formatTime(initialDuration);
+    }
 }
 
 function handleTouchStart(e) {
     if (isEditing) return;
     startY = e.touches[0].clientY;
-    lastTouchY = startY;
-    startHeight = parseInt(getComputedStyle(timerContainer).height, 10);
+    currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
     isDragging = true;
 }
 
 function handleTouchMove(e) {
     if (!isDragging || isEditing) return;
     const currentY = e.touches[0].clientY;
-    const deltaY = currentY - lastTouchY;
-    lastTouchY = currentY;
+    const deltaY = currentY - startY;
     
-    const newHeight = Math.max(50, Math.min(300, startHeight + (startY - currentY)));
+    const newHeight = Math.max(50, Math.min(300, currentHeight - deltaY));
     timerContainer.style.height = `${newHeight}px`;
     
-    if (Math.abs(currentY - startY) > 5) {
-        e.preventDefault(); // Prevent default pull-to-refresh behavior
+    if (Math.abs(deltaY) > 5) {
+        e.preventDefault();
     }
 }
 
-function handleTouchEnd() {
+function handleTouchEnd(e) {
     if (!isDragging || isEditing) return;
     isDragging = false;
-    const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
-    timerContainer.style.height = currentHeight < 150 ? '50px' : '300px';
+    const endY = e.changedTouches[0].clientY;
+    const deltaY = endY - startY;
+
+    if (Math.abs(deltaY) > SWIPE_THRESHOLD) {
+        if (deltaY > 0) {
+            timerContainer.style.height = '50px';
+        } else {
+            timerContainer.style.height = '300px';
+        }
+    } else {
+        timerContainer.style.height = `${currentHeight}px`;
+    }
 }
 
-function toggleTimerContainer() {
+function toggleTimerContainer(e) {
     if (isEditing) return;
     const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
     timerContainer.style.height = currentHeight === 300 ? '50px' : '300px';
+    e.stopPropagation();
 }
 
 window.addEventListener('load', async () => {
@@ -238,11 +249,9 @@ function setupInputListeners(input) {
 setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
 
-// Drawer event listeners
 timerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
 timerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
 timerContainer.addEventListener('touchend', handleTouchEnd);
 timerHandle.addEventListener('click', toggleTimerContainer);
 
-// Prevent drawer from closing when interacting with content
 timerContent.addEventListener('click', (e) => e.stopPropagation());
