@@ -1,5 +1,6 @@
 import notificationManager from './notifications.js';
 
+import { APP_CONFIG } from './config.js';
 const APP_VERSION = APP_CONFIG.version;
 
 const timerWorker = new Worker('timer-worker.js');
@@ -113,11 +114,13 @@ function playNotificationSound() {
 }
 
 function updateButtonStates() {
-    startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
-    addTenSecondsButton.disabled = !isTimerRunning;
-    resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
-    minutesInput.disabled = isTimerRunning;
-    secondsInput.disabled = isTimerRunning;
+    if (startPauseButton) startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
+    if (addTenSecondsButton) addTenSecondsButton.disabled = !isTimerRunning;
+    if (resetButton && timeLeftDisplay) {
+        resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
+    }
+    if (minutesInput) minutesInput.disabled = isTimerRunning;
+    if (secondsInput) secondsInput.disabled = isTimerRunning;
 }
 
 function updateVersionDisplay() {
@@ -178,7 +181,7 @@ function handleTouchMove(e) {
     const deltaY = currentY - lastTouchY;
     lastTouchY = currentY;
     
-    const newHeight = Math.max(50, Math.min(300, parseInt(getComputedStyle(timerContainer).height, 10) - deltaY));
+    const newHeight = Math.max(50, Math.min(300, startHeight + (startY - currentY)));
     timerContainer.style.height = `${newHeight}px`;
     
     if (Math.abs(currentY - startY) > 5) {
@@ -190,11 +193,7 @@ function handleTouchEnd() {
     if (!isDragging || isEditing) return;
     isDragging = false;
     const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
-    if (currentHeight < 150) {
-        timerContainer.style.height = '50px';
-    } else {
-        timerContainer.style.height = '300px';
-    }
+    timerContainer.style.height = currentHeight < 150 ? '50px' : '300px';
 }
 
 function toggleTimerContainer() {
@@ -240,7 +239,7 @@ setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
 
 // Drawer event listeners
-timerContainer.addEventListener('touchstart', handleTouchStart);
+timerContainer.addEventListener('touchstart', handleTouchStart, { passive: false });
 timerContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
 timerContainer.addEventListener('touchend', handleTouchEnd);
 timerHandle.addEventListener('click', toggleTimerContainer);
