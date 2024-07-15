@@ -14,7 +14,6 @@ const urlsToCache = [
     'config.js'
 ];
 
-// Séparez le fichier audio des autres ressources
 const audioToCache = 'notification.mp3';
 
 self.addEventListener('install', event => {
@@ -25,10 +24,8 @@ self.addEventListener('install', event => {
             .then(cache => {
                 console.log('Service Worker: Caching files');
                 
-                // Mise en cache des fichiers réguliers
                 const regularCaching = cache.addAll(urlsToCache);
                 
-                // Mise en cache spéciale pour le fichier audio
                 const audioCaching = fetch(audioToCache)
                     .then(response => {
                         if (!response.ok) {
@@ -87,5 +84,16 @@ self.addEventListener('message', event => {
         self.registration.showNotification(event.data.title, event.data.options)
             .then(() => console.log('Notification shown successfully'))
             .catch(error => console.error('Error showing notification:', error));
+    }
+});
+
+self.addEventListener('sync', function(event) {
+    if (event.tag === 'notify-sync') {
+        event.waitUntil(
+            self.registration.showNotification('Tea is ready!', {
+                body: 'Your tea has finished steeping.',
+                icon: 'icon.png'
+            })
+        );
     }
 });
