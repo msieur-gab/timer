@@ -5,7 +5,7 @@ const APP_VERSION = APP_CONFIG.version;
 const DEBUG = true; // Set this to false in production
 
 const timerWorker = new Worker('timer-worker.js');
-let wakeLock = null;
+let wakeLockRequest = null;
 const audio = new Audio('notification.mp3');
 let isTimerRunning = false;
 let initialDuration = 0;
@@ -54,7 +54,7 @@ async function startTimer() {
     lastEditedDuration = initialDuration;
 
     try {
-        wakeLock = await navigator.wakeLock.request('screen');
+        await acquireWakeLock();
         timerWorker.postMessage({ command: 'start', duration: initialDuration });
         isTimerRunning = true;
         updateButtonStates();
@@ -120,11 +120,8 @@ async function timerFinished() {
         const permission = await requestNotificationPermission();
         debugLog('Current permission:', permission);
         if (permission) {
-            await notificationManager.showNotification('Tea is ready!', {
-                body: 'Your tea has finished steeping.',
-                icon: 'icon.png'
-            });
-            debugLog('Notification sent successfully');
+            await scheduleNotification();
+            debugLog('Notification scheduled successfully');
         } else {
             debugLog('Notification permission not granted');
         }
@@ -135,6 +132,7 @@ async function timerFinished() {
     updateButtonStates();
     timerWorker.postMessage({ command: 'stop' });
     updateTimerDisplay(lastEditedDuration);
+    setAppBadge(1);
 }
 
 function playNotificationSound() {
@@ -210,11 +208,27 @@ function updateTimeLeftDisplay() {
     }
 }
 
-async function releaseWakeLock() {
-    if (wakeLock) {
+async function acquireWakeLock() {
+    if ('wakeLock' in navigator) {
         try {
-            await wakeLock.release();
-            wakeLock = null;
+            wakeLockRequest = await navigator.wakeLock.request('screen');
+            debugLog('Wake Lock is acquired');
+            wakeLockRequest.addEventListener('release', () => {
+                debugLog('Wake Lock was released');
+            });
+        } catch (err) {
+            debugLog(`Error acquiring wake lock: ${err.name}, ${err.message}`);
+        }
+    } else {
+        debugLog('Wake Lock API not supported');
+    }
+}
+
+async function releaseWakeLock() {
+    if (wakeLockRequest) {
+        try {
+            await wakeLockRequest.release();
+            wakeLockRequest = null;
             debugLog('Wake Lock released');
         } catch (err) {
             debugLog(`Error releasing wake lock: ${err.name}, ${err.message}`);
@@ -292,6 +306,29 @@ async function requestNotificationPermission() {
 
     debugLog('Permission denied previously');
     return false;
+}
+
+async function setAppBadge(count) {
+    if ('setAppBadge' in navigator) {
+        try {
+            await navigator.setAppBadge(count);
+            debugLog('App badge set');
+        } catch (error) {
+            debugLog('Error setting app badge:', error);
+        }
+    }
+}
+
+async function scheduleNotification() {
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        const registration = await navigator.serviceWorker.ready;
+        try {
+            await registration.sync.register('notify-sync');
+            debugLog('Background sync registered');
+        } catch (err) {
+            debugLog('Error registering background sync:', err);
+        }
+    }
 }
 
 window.addEventListener('load', async () => {
