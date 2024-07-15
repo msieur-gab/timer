@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v0.0.9';
+export const APP_VERSION = 'v0.1.0';
 export const DEBUG = false;
 
 export const TIMER_EVENTS = {
