@@ -14,6 +14,12 @@ const addTenSecondsButton = document.getElementById('add-ten-seconds-button');
 const resetButton = document.getElementById('reset-button');
 const minutesInput = document.getElementById('minutes');
 const secondsInput = document.getElementById('seconds');
+const timerContainer = document.querySelector('.interactive-timer');
+const timerHandle = document.querySelector('.timer-handle');
+
+let isDragging = false;
+let startY;
+let startHeight;
 
 async function startPauseTimer() {
     if (!isTimerRunning) {
@@ -124,7 +130,7 @@ function toggleEditMode(input) {
     
     if (isEditing) {
         input.focus();
-        input.select();  // Sélectionne tout le texte dans le champ
+        input.select();
     } else {
         validateTimeInput(minutesInput);
         validateTimeInput(secondsInput);
@@ -147,6 +153,36 @@ function updateTimeLeftDisplay() {
     const minutes = parseInt(minutesInput.value) || 0;
     const seconds = parseInt(secondsInput.value) || 0;
     initialDuration = minutes * 60 + seconds;
+}
+
+// Timer container interactions
+function handleTouchStart(e) {
+    startY = e.touches[0].clientY;
+    startHeight = parseInt(getComputedStyle(timerContainer).height, 10);
+    isDragging = true;
+}
+
+function handleTouchMove(e) {
+    if (!isDragging) return;
+    const deltaY = e.touches[0].clientY - startY;
+    const newHeight = Math.max(50, Math.min(300, startHeight - deltaY));
+    timerContainer.style.height = `${newHeight}px`;
+}
+
+function handleTouchEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
+    if (currentHeight < 150) {
+        timerContainer.style.height = '50px';
+    } else {
+        timerContainer.style.height = '300px';
+    }
+}
+
+function toggleTimerContainer() {
+    const currentHeight = parseInt(getComputedStyle(timerContainer).height, 10);
+    timerContainer.style.height = currentHeight === 300 ? '50px' : '300px';
 }
 
 window.addEventListener('load', async () => {
@@ -181,3 +217,9 @@ function setupInputListeners(input) {
 
 setupInputListeners(minutesInput);
 setupInputListeners(secondsInput);
+
+// Timer container event listeners
+timerHandle.addEventListener('touchstart', handleTouchStart);
+timerHandle.addEventListener('touchmove', handleTouchMove);
+timerHandle.addEventListener('touchend', handleTouchEnd);
+timerHandle.addEventListener('click', toggleTimerContainer);
