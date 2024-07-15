@@ -95,40 +95,33 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    font-size: 48px;
+    margin: 20px 0;
 }
 
 #time_input input {
     width: 60px;
-    height: 60px;
-    border: 2px solid #4CAF50;
-    border-radius: 8px;
-    font-size: 1.5rem;
-    text-align: center;
-    color: #132c14;
+    border: none;
     background: transparent;
-}
-
-#time_input label {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-#time_input .label {
-    font-size: 0.55rem;
-    position: absolute;
-    top: 4.5px;
-    left: 50%;
-    transform: translateX(-50%);
+    font-size: inherit;
+    text-align: center;
+    color: inherit;
+    cursor: pointer;
 }
 
 #time_input input:focus {
-    outline: 3px solid #2b662e;
+    outline: none;
+    border-bottom: 2px solid #4CAF50;
 }
 
-#time_input input:focus + .label {
-    color: #2b662e;
+#time_input input.editing {
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    background-color: white;
+}
+
+#time_input span {
+    margin: 0 5px;
 }
 
 input[type="number"] {
@@ -144,7 +137,6 @@ input::-webkit-inner-spin-button {
 @media (max-width: 480px) {
     #time_input input {
         width: 50px;
-        height: 50px;
         font-size: 1.2rem;
     }
 
