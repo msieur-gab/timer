@@ -4,7 +4,7 @@ import { TIMER_EVENTS } from '../core/config.js';
 class TimerManager extends EventEmitter {
     constructor() {
         super();
-        this.worker = new Worker('../workers/timer-worker.js');
+        this.worker = new Worker('./workers/timer-worker.js');
         this.isRunning = false;
         this.initialDuration = 0;
         this.setupWorkerListeners();
