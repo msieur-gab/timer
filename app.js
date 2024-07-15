@@ -57,9 +57,21 @@ function pauseTimer() {
     updateButtonStates();
 }
 
+// function addTenSeconds() {
+//     timerWorker.postMessage({ command: 'addTime', seconds: 10 });
+// }
+
 function addTenSeconds() {
-    timerWorker.postMessage({ command: 'addTime', seconds: 10 });
+    if (isTimerRunning) {
+        timerWorker.postMessage({ command: 'addTime', seconds: 10 });
+    } else {
+        const currentTime = parseInt(minutesInput.value) * 60 + parseInt(secondsInput.value);
+        const newTime = currentTime + 10;
+        updateTimerDisplay(newTime);
+        lastEditedDuration = newTime;
+    }
 }
+
 
 async function resetTimer() {
     await releaseWakeLock();
@@ -113,7 +125,7 @@ function playNotificationSound() {
 
 function updateButtonStates() {
     if (startPauseButton) startPauseButton.textContent = isTimerRunning ? "Pause" : "Start";
-    if (addTenSecondsButton) addTenSecondsButton.disabled = !isTimerRunning;
+    // if (addTenSecondsButton) addTenSecondsButton.disabled = !isTimerRunning;
     if (resetButton && timeLeftDisplay) {
         resetButton.disabled = !isTimerRunning && timeLeftDisplay.textContent === formatTime(initialDuration);
     }
