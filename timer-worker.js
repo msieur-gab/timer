@@ -1,4 +1,5 @@
-let timerId;
+let intervalId;
+let targetTime;
 let timeLeft;
 let isPaused = false;
 
@@ -24,40 +25,47 @@ self.onmessage = function(e) {
 
 function startTimer(duration) {
     timeLeft = duration;
+    targetTime = Date.now() + duration * 1000;
     isPaused = false;
     runTimer();
 }
 
 function runTimer() {
-    if (!isPaused) {
-        self.postMessage({ timeLeft: timeLeft });
-        if (timeLeft > 0) {
-            timeLeft--;
-            timerId = setTimeout(runTimer, 1000);
-        } else {
-            self.postMessage({ command: 'finished' });
+    clearInterval(intervalId);
+    intervalId = setInterval(() => {
+        if (!isPaused) {
+            const now = Date.now();
+            timeLeft = Math.max(0, Math.round((targetTime - now) / 1000));
+            self.postMessage({ timeLeft: timeLeft });
+
+            if (timeLeft <= 0) {
+                clearInterval(intervalId);
+                self.postMessage({ command: 'finished' });
+            }
         }
-    }
+    }, 1000);
 }
 
 function pauseTimer() {
     isPaused = true;
-    clearTimeout(timerId);
+    clearInterval(intervalId);
 }
 
 function resetTimer(duration) {
-    clearTimeout(timerId);
+    clearInterval(intervalId);
     timeLeft = duration;
+    targetTime = Date.now() + duration * 1000;
     isPaused = true;
     self.postMessage({ timeLeft: timeLeft });
 }
 
 function addTime(seconds) {
     timeLeft += seconds;
+    targetTime += seconds * 1000;
     self.postMessage({ timeLeft: timeLeft });
 }
 
 function stopTimer() {
-    clearTimeout(timerId);
+    clearInterval(intervalId);
     isPaused = true;
 }

@@ -12,7 +12,6 @@ body {
 }
 
 #timer-display {
-    font-size: 48px;
     text-align: center;
     margin: 20px 0;
 }
@@ -28,16 +27,6 @@ body {
     justify-content: space-between;
     align-items: center;
     margin: 20px 0;
-}
-
- input {
-     background:transparent;
-  border: none;
-  display: inline;
-  font-family: inherit;
-  font-size: inherit;
-  padding: none;
-  width: auto;
 }
 
 .scale-dots {
@@ -65,23 +54,21 @@ body {
     color: #888;
 }
 
-
 .interactive-timer {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 300px; /* Ajustez selon vos besoins */
+    height: 50px;
     background-color: #e2e2e2;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease-out;
+    transition: height 0.2s ease-out;
+    overflow: hidden;
 }
 
 .timer-handle {
     height: 50px;
     background-color: #f0f0f0;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
     cursor: pointer;
     display: flex;
     justify-content: center;
@@ -100,4 +87,65 @@ body {
     padding: 20px;
     height: calc(100% - 50px);
     overflow-y: auto;
+}
+
+#time_input {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3em;
+    margin: 20px 0;
+}
+
+#time_input input {
+    width: 70px;
+    height: 70px;
+    border: none;
+    background: transparent;
+    font-size: inherit;
+    text-align: center;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    margin: 0 5px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+#time_input input:focus {
+    outline: none;
+}
+
+#time_input input.editing {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+#time_input span {
+    margin: 0 5px;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+@media (max-width: 480px) {
+    #time_input {
+        font-size: 36px;
+    }
+
+    #time_input input {
+        width: 60px;
+        height: 60px;
+    }
+
+    #timer-controls button {
+        padding: 8px;
+        font-size: 14px;
+    }
 }
